@@ -1361,9 +1361,10 @@ select option { background: var(--surface); }
       <div class="pane-hdr">
         <div>
           <div class="pane-hdr-title">AI AGENT</div>
-          <div class="pane-hdr-sub">Substrate-aware · reads live state · emits signed events · Claude Sonnet 4</div>
+          <div class="pane-hdr-sub">Substrate-aware · reads live state · emits signed events · Ollama local</div>
         </div>
         <div class="pane-hdr-actions">
+          <input id="ollama-model" value="llama3" style="font-family:var(--mono);font-size:11px;padding:4px 10px;background:var(--surface2);border:1px solid var(--border2);border-radius:var(--r-xs);color:var(--cyan);width:130px" placeholder="ollama model…" title="Ollama model name">
           <button class="btn btn-ghost btn-sm" onclick="clearAgentChat()">Clear</button>
           <button class="btn btn-a btn-sm" onclick="agentRunSummary()">Summarize State</button>
         </div>
@@ -2885,20 +2886,29 @@ async function sendAgentMessage() {
   document.getElementById('agent-send-btn').disabled = true;
   const thinking = appendAgentMsg('<span class="agent-spinner"></span>Thinking…', 'ai', true);
   try {
-    const response = await fetch('https://api.anthropic.com/v1/messages', {
+    const ollamaModel = document.getElementById('ollama-model')?.value?.trim() || 'llama3';
+    const ollamaMessages = [
+      { role: 'system', content: getSubstrateContext() },
+      ...agentHistory
+    ];
+    const response = await fetch('http://localhost:11434/api/chat', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'claude-sonnet-4-20250514', max_tokens: 1000, system: getSubstrateContext(), messages: agentHistory })
+      body: JSON.stringify({ model: ollamaModel, messages: ollamaMessages, stream: false })
     });
+    if (!response.ok) {
+      const errText = await response.text();
+      throw new Error('Ollama error ' + response.status + ': ' + errText.slice(0, 120));
+    }
     const data  = await response.json();
-    const reply = data.content?.map(b => b.text || '').join('') || 'No response.';
+    const reply = data.message?.content || 'No response.';
     thinking.remove();
     appendAgentMsg(reply, 'ai');
     agentHistory.push({ role:'assistant', content: reply });
     if (agentHistory.length > 20) agentHistory = agentHistory.slice(-20);
   } catch (err) {
     thinking.remove();
-    appendAgentMsg('Connection error: ' + err.message, 'err');
+    appendAgentMsg('Ollama connection error: ' + err.message + '\n\nMake sure Ollama is running (ollama serve) and the model is pulled.', 'err');
   }
   agentRunning = false;
   document.getElementById('agent-send-btn').disabled = false;
@@ -3552,35 +3562,22 @@ async function dkNLtoIR() {
   if (!nl) { notify('Enter a description first'); return; }
   notify('Generating JSONFlow IR via AI…');
   try {
-    const apiKey = document.getElementById('agent-key')?.value?.trim();
-    if (!apiKey) {
-      // Demo mode — generate a plausible IR
-      const demo = {
-        workflow: 'nl-generated-' + Date.now(),
-        version: '1.0.0',
-        description: nl.slice(0,80),
-        steps: [
-          { id: 'step1', type: 'compute', params: { input: nl.slice(0,40) } },
-          { id: 'step2', type: 'transform', params: { operation: 'map' }, parent_step_ids: ['step1'] },
-          { id: 'step3', type: 'emit_event', params: { type: 'result' }, parent_step_ids: ['step2'] }
-        ]
-      };
-      document.getElementById('dk-ir-editor').value = JSON.stringify(demo, null, 2);
-      dkParseSteps(demo);
-      notify('IR generated (demo mode — add API key for real AI)');
-      return;
-    }
-    const res = await fetch('https://api.anthropic.com/v1/messages', {
+    const ollamaModel = document.getElementById('ollama-model')?.value?.trim() || 'llama3';
+    const res = await fetch('http://localhost:11434/api/chat', {
       method: 'POST',
-      headers: { 'Content-Type': 'application/json', 'x-api-key': apiKey, 'anthropic-version': '2023-06-01' },
+      headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({
-        model: 'claude-sonnet-4-20250514', max_tokens: 1000,
-        system: 'You are a JSONFlow IR generator. Output ONLY valid JSON matching the JSONFlow schema: {workflow, version, steps:[{id,type,params,parent_step_ids?}]}. Common types: compute, transform, ai_classify, ai_infer, token_transfer, crypto_sign, emit_event, ipfs_add, balance_read, identity_verify. No prose, no markdown, only JSON.',
-        messages: [{ role: 'user', content: 'Generate a JSONFlow workflow for: ' + nl }]
+        model: ollamaModel,
+        stream: false,
+        messages: [
+          { role: 'system', content: 'You are a JSONFlow IR generator. Output ONLY valid JSON matching the JSONFlow schema: {workflow, version, steps:[{id,type,params,parent_step_ids?}]}. Common types: compute, transform, ai_classify, ai_infer, token_transfer, crypto_sign, emit_event, ipfs_add, balance_read, identity_verify. No prose, no markdown, only JSON.' },
+          { role: 'user', content: 'Generate a JSONFlow workflow for: ' + nl }
+        ]
       })
     });
+    if (!res.ok) { const e = await res.text(); throw new Error('Ollama ' + res.status + ': ' + e.slice(0,120)); }
     const d = await res.json();
-    const text = d.content?.[0]?.text || '{}';
+    const text = d.message?.content || '{}';
     let ir;
     try { ir = JSON.parse(text); } catch { ir = JSON.parse(text.replace(/```json|```/g,'')); }
     document.getElementById('dk-ir-editor').value = JSON.stringify(ir, null, 2);
