@@ -839,6 +839,7 @@ select option { background: var(--surface); }
 *::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
 </style>
+<script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
 <body>
 
@@ -1100,7 +1101,7 @@ select option { background: var(--surface); }
       <div class="pane-hdr">
         <div>
           <div class="pane-hdr-title">NETWORK</div>
-          <div class="pane-hdr-sub">WebRTC P2P mesh · no relay required · event sync</div>
+          <div class="pane-hdr-sub">WebRTC P2P mesh · auto-handshake · event sync</div>
         </div>
       </div>
       <div class="pane-scroll">
@@ -1108,20 +1109,49 @@ select option { background: var(--surface); }
 
           <!-- Left: peer controls -->
           <div style="display:flex;flex-direction:column;gap:12px">
+
+            <!-- ── AUTO-HANDSHAKE ── -->
             <div class="section">
               <div class="sec-header" onclick="toggleSection(this)">
-                <span class="sec-title">WebRTC Peer Mesh</span>
+                <span class="sec-title">⚡ Auto Handshake</span>
+                <span class="sec-badge" id="peerjs-status-badge">offline</span>
                 <span class="sec-chevron">▼</span>
               </div>
               <div class="sec-body">
-                <div style="font-size:10px;color:var(--text2);margin-bottom:8px">Browser-to-browser P2P. No relay server required after handshake.</div>
-                <div class="btn-row">
-                  <button class="btn btn-c btn-sm" onclick="initiateConnection()">Create Offer</button>
-                  <button class="btn btn-ghost btn-sm" onclick="processInput()">Process SDP</button>
+                <div style="font-size:10px;color:var(--text2);margin-bottom:10px;line-height:1.6">
+                  Both peers share their <strong style="color:var(--cyan)">Peer ID</strong> (auto-generated below). Enter the other person's ID and click Connect — the handshake happens automatically.
                 </div>
-                <div id="conn-status" style="font-size:10px;color:var(--amber);margin-bottom:6px">Ready</div>
-                <div class="sep">SDP Exchange</div>
-                <textarea class="sdp-area" id="conn-data" placeholder="Paste offer / answer SDP JSON here…"></textarea>
+
+                <!-- My Peer ID -->
+                <div style="margin-bottom:10px">
+                  <div style="font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Your Peer ID</div>
+                  <div style="display:flex;gap:6px;align-items:center">
+                    <div id="my-peer-id" style="flex:1;font-size:11px;color:var(--cyan);background:var(--cyan-t);border:1px solid rgba(0,212,255,.2);border-radius:var(--r-xs);padding:6px 10px;word-break:break-all;min-height:28px;line-height:1.5">Initializing…</div>
+                    <button class="copy-btn" onclick="copyPeerId()" title="Copy ID">⎘</button>
+                  </div>
+                </div>
+
+                <!-- Their Peer ID -->
+                <div style="margin-bottom:8px">
+                  <div style="font-size:9px;color:var(--text3);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Remote Peer ID</div>
+                  <input id="remote-peer-id" placeholder="Paste the other person's Peer ID…" style="font-size:11px;margin-bottom:6px">
+                </div>
+
+                <button class="btn btn-c btn-block btn-sm" onclick="autoConnect()" id="auto-connect-btn">Connect</button>
+                <div id="conn-status" style="font-size:10px;color:var(--amber);margin-top:8px;min-height:16px;line-height:1.5">Ready — share your Peer ID above</div>
+
+                <!-- Divider to old manual fallback -->
+                <details style="margin-top:12px">
+                  <summary style="font-size:9px;color:var(--text3);cursor:pointer;letter-spacing:.08em;text-transform:uppercase;user-select:none">▸ Manual SDP fallback</summary>
+                  <div style="margin-top:8px">
+                    <div style="font-size:9px;color:var(--text3);margin-bottom:6px">Use only if auto-handshake is unavailable (no internet).</div>
+                    <div class="btn-row">
+                      <button class="btn btn-ghost btn-sm" onclick="initiateConnection()">Create Offer</button>
+                      <button class="btn btn-ghost btn-sm" onclick="processInput()">Process SDP</button>
+                    </div>
+                    <textarea class="sdp-area" id="conn-data" placeholder="Paste offer / answer SDP JSON here…" style="margin-top:6px"></textarea>
+                  </div>
+                </details>
               </div>
             </div>
 
@@ -1172,7 +1202,7 @@ select option { background: var(--surface); }
             </div>
           </div>
 
-          <!-- Right: topology placeholder -->
+          <!-- Right: topology -->
           <div style="display:flex;flex-direction:column;gap:12px">
             <div class="section">
               <div class="sec-header" onclick="toggleSection(this)">
@@ -1180,22 +1210,13 @@ select option { background: var(--surface); }
                 <span class="sec-badge">P2P Mesh</span>
                 <span class="sec-chevron">▼</span>
               </div>
-              <div class="sec-body" style="text-align:center;padding:24px 14px">
-                <div style="font-size:11px;color:var(--text3);margin-bottom:12px">Connect peers to visualize mesh topology</div>
-                <svg viewBox="0 0 120 80" width="100%" style="opacity:.4">
-                  <circle cx="60" cy="40" r="6" fill="var(--cyan)" opacity=".8"/>
-                  <circle cx="20" cy="20" r="4" fill="var(--border2)"/>
-                  <circle cx="100" cy="20" r="4" fill="var(--border2)"/>
-                  <circle cx="20" cy="60" r="4" fill="var(--border2)"/>
-                  <circle cx="100" cy="60" r="4" fill="var(--border2)"/>
-                  <line x1="60" y1="40" x2="20" y2="20" stroke="var(--border2)" stroke-width="1" stroke-dasharray="3,3"/>
-                  <line x1="60" y1="40" x2="100" y2="20" stroke="var(--border2)" stroke-width="1" stroke-dasharray="3,3"/>
-                  <line x1="60" y1="40" x2="20" y2="60" stroke="var(--border2)" stroke-width="1" stroke-dasharray="3,3"/>
-                  <line x1="60" y1="40" x2="100" y2="60" stroke="var(--border2)" stroke-width="1" stroke-dasharray="3,3"/>
-                </svg>
+              <div class="sec-body" style="text-align:center;padding:16px 14px">
+                <canvas id="topo-canvas" width="220" height="160" style="width:100%;border-radius:var(--r-sm)"></canvas>
+                <div style="font-size:9px;color:var(--text3);margin-top:6px" id="topo-label">No peers — topology empty</div>
               </div>
             </div>
           </div>
+
         </div>
       </div>
     </div>
@@ -2944,8 +2965,225 @@ function clearAgentChat() {
 }
 
 // ════════════════════════════════════════
-// WEBRTC PEER MESH
+// WEBRTC PEER MESH — PeerJS auto-handshake
 // ════════════════════════════════════════
+
+let peerJS = null;        // PeerJS instance
+let peerJSReady = false;
+
+// ── Init PeerJS on load ──────────────────
+function initPeerJS() {
+  const savedId = localStorage.getItem('sov-peer-id') || undefined;
+  try {
+    peerJS = new Peer(savedId, {
+      host: '0.peerjs.com', port: 443, secure: true, path: '/',
+      config: { iceServers: [
+        { urls: 'stun:stun.l.google.com:19302' },
+        { urls: 'stun:stun1.l.google.com:19302' }
+      ]}
+    });
+  } catch(e) {
+    setConnStatus('PeerJS unavailable — use Manual SDP fallback', 'var(--red)');
+    return;
+  }
+
+  peerJS.on('open', id => {
+    peerJSReady = true;
+    localStorage.setItem('sov-peer-id', id);
+    const el = document.getElementById('my-peer-id');
+    if (el) el.textContent = id;
+    const badge = document.getElementById('peerjs-status-badge');
+    if (badge) { badge.textContent = 'online'; badge.style.color = 'var(--green)'; }
+    setConnStatus('Ready — share your Peer ID above', 'var(--amber)');
+    netLog('PeerJS ready · ID: ' + id.slice(0,16) + '…');
+  });
+
+  peerJS.on('connection', conn => {
+    netLog('Incoming connection from ' + conn.peer.slice(0,16) + '…');
+    setConnStatus('Incoming connection — handshaking…', 'var(--cyan)');
+    setupPeerJSConn(conn);
+  });
+
+  peerJS.on('error', err => {
+    const badge = document.getElementById('peerjs-status-badge');
+    if (badge) { badge.textContent = 'error'; badge.style.color = 'var(--red)'; }
+    setConnStatus('PeerJS error: ' + err.type, 'var(--red)');
+    netLog('ERROR: ' + err.message);
+  });
+
+  peerJS.on('disconnected', () => {
+    const badge = document.getElementById('peerjs-status-badge');
+    if (badge) { badge.textContent = 'reconnecting…'; badge.style.color = 'var(--amber)'; }
+    setTimeout(() => { try { peerJS.reconnect(); } catch {} }, 2000);
+  });
+}
+
+// ── Setup a PeerJS DataConnection ────────
+function setupPeerJSConn(conn) {
+  const peerId = conn.peer;
+  // Wrap in our peer object shape
+  const p = {
+    id: peerId,
+    connected: false,
+    did: null,
+    send: msg => { if (conn.open) conn.send(msg); }
+  };
+  peers.set(peerId, p);
+
+  conn.on('open', () => {
+    p.connected = true;
+    syncedCount++;
+    // Sovereign-level handshake
+    p.send({ type:'handshake', identity: identity ? { did: identity.did, pubkey: keypair?.pubHex } : null, headCid: log.length > 0 ? log[log.length-1].cid : null });
+    render();
+    notify('⚡ Peer connected: ' + peerId.slice(0,12) + '…');
+    setConnStatus('Connected to ' + peerId.slice(0,14) + '…', 'var(--green)');
+    netLog('Connected · ' + peerId.slice(0,16) + '…');
+    drawTopo();
+    document.getElementById('auto-connect-btn').disabled = false;
+    document.getElementById('auto-connect-btn').textContent = 'Connect';
+  });
+
+  conn.on('data', msg => {
+    try { handlePeerMsg(p, msg); } catch(e) { console.error(e); }
+  });
+
+  conn.on('close', () => {
+    p.connected = false;
+    syncedCount = Math.max(0, syncedCount - 1);
+    peers.delete(peerId);
+    render();
+    setConnStatus('Peer disconnected', 'var(--amber)');
+    netLog('Disconnected · ' + peerId.slice(0,16) + '…');
+    drawTopo();
+  });
+
+  conn.on('error', err => {
+    setConnStatus('Connection error: ' + err.message, 'var(--red)');
+    netLog('Conn error: ' + err.message);
+    document.getElementById('auto-connect-btn').disabled = false;
+    document.getElementById('auto-connect-btn').textContent = 'Connect';
+  });
+}
+
+// ── Auto-connect button ──────────────────
+function autoConnect() {
+  const remoteId = document.getElementById('remote-peer-id')?.value?.trim();
+  if (!remoteId) { notify('Paste the remote Peer ID first'); return; }
+  if (!peerJSReady || !peerJS) { notify('PeerJS not ready yet — wait a moment'); return; }
+  if (peers.has(remoteId)) { notify('Already connected to this peer'); return; }
+
+  const btn = document.getElementById('auto-connect-btn');
+  btn.disabled = true;
+  btn.textContent = 'Connecting…';
+  setConnStatus('Dialing ' + remoteId.slice(0,14) + '…', 'var(--cyan)');
+  netLog('Dialing → ' + remoteId.slice(0,16) + '…');
+
+  const conn = peerJS.connect(remoteId, { reliable: true, serialization: 'json' });
+  setupPeerJSConn(conn);
+
+  // Timeout fallback
+  setTimeout(() => {
+    if (!peers.get(remoteId)?.connected) {
+      btn.disabled = false;
+      btn.textContent = 'Connect';
+      setConnStatus('Connection timed out — check the Peer ID', 'var(--red)');
+      peers.delete(remoteId);
+    }
+  }, 20000);
+}
+
+function copyPeerId() {
+  const id = document.getElementById('my-peer-id')?.textContent?.trim();
+  if (!id || id === 'Initializing…') { notify('Peer ID not ready yet'); return; }
+  navigator.clipboard.writeText(id).then(() => notify('Peer ID copied!')).catch(() => notify('Copy failed'));
+}
+
+function setConnStatus(msg, color) {
+  const el = document.getElementById('conn-status');
+  if (el) { el.textContent = msg; el.style.color = color || 'var(--amber)'; }
+}
+
+// ── Topology canvas ──────────────────────
+function drawTopo() {
+  const canvas = document.getElementById('topo-canvas');
+  if (!canvas) return;
+  const ctx = canvas.getContext('2d');
+  const W = canvas.width, H = canvas.height;
+  ctx.clearRect(0, 0, W, H);
+
+  const connectedPeers = [...peers.values()].filter(p => p.connected);
+  const label = document.getElementById('topo-label');
+
+  // Background
+  ctx.fillStyle = 'rgba(17,20,32,0.8)';
+  ctx.fillRect(0, 0, W, H);
+
+  // Self node (center)
+  const cx = W / 2, cy = H / 2;
+
+  if (connectedPeers.length === 0) {
+    // Draw lonely self node
+    ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+    ctx.fillStyle = '#00d4ff'; ctx.fill();
+    ctx.shadowColor = '#00d4ff'; ctx.shadowBlur = 16; ctx.fill();
+    ctx.shadowBlur = 0;
+    if (label) label.textContent = 'Only you — no peers yet';
+    return;
+  }
+
+  // Position peer nodes in a circle around center
+  const radius = Math.min(W, H) * 0.32;
+  connectedPeers.forEach((p, i) => {
+    const angle = (i / connectedPeers.length) * Math.PI * 2 - Math.PI / 2;
+    const px = cx + Math.cos(angle) * radius;
+    const py = cy + Math.sin(angle) * radius;
+
+    // Line
+    ctx.beginPath(); ctx.moveTo(cx, cy); ctx.lineTo(px, py);
+    ctx.strokeStyle = 'rgba(0,212,255,0.35)'; ctx.lineWidth = 1.5;
+    ctx.setLineDash([4, 4]); ctx.stroke(); ctx.setLineDash([]);
+
+    // Peer node
+    ctx.beginPath(); ctx.arc(px, py, 5, 0, Math.PI * 2);
+    ctx.fillStyle = '#00ff88'; ctx.shadowColor = '#00ff88'; ctx.shadowBlur = 12; ctx.fill();
+    ctx.shadowBlur = 0;
+
+    // Label
+    ctx.fillStyle = 'rgba(168,180,208,0.9)'; ctx.font = '8px IBM Plex Mono, monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(p.id.slice(0, 8) + '…', px, py + 14);
+  });
+
+  // Self node on top
+  ctx.beginPath(); ctx.arc(cx, cy, 8, 0, Math.PI * 2);
+  ctx.fillStyle = '#00d4ff'; ctx.shadowColor = '#00d4ff'; ctx.shadowBlur = 18; ctx.fill();
+  ctx.shadowBlur = 0;
+  ctx.fillStyle = 'rgba(168,180,208,0.7)'; ctx.font = '8px IBM Plex Mono, monospace';
+  ctx.textAlign = 'center'; ctx.fillText('YOU', cx, cy + 20);
+
+  if (label) label.textContent = connectedPeers.length + ' peer' + (connectedPeers.length > 1 ? 's' : '') + ' connected';
+}
+
+// ── Send to a peer (PeerJS path) ─────────
+function sendToPeer(p, msg) {
+  if (p.send) { p.send(msg); return; }           // PeerJS conn
+  if (p.dc?.readyState === 'open') p.dc.send(JSON.stringify(msg)); // legacy raw WRC
+}
+function broadcastEvent(e) { for (const p of peers.values()) sendToPeer(p, { type:'event', event: e }); }
+
+async function applyRemote(events) {
+  const myCids = new Set(log.map(e => e.cid));
+  let added = 0;
+  for (const e of events) {
+    if (myCids.has(e.cid)) continue;
+    const v = await verifyEvent(e);
+    if (v.valid) { e._verified = true; log.push(e); added++; }
+  }
+  if (added > 0) { log.sort((a,b) => a.ts - b.ts); state = replay(log); saveLog(); render(); notify(`Synced ${added} event(s) from peer`); }
+}
+
+// ── Legacy manual SDP fallback ───────────
 function newPeerConn(id) {
   const pc = new RTCPeerConnection({ iceServers:[{urls:'stun:stun.l.google.com:19302'}] });
   const dc = pc.createDataChannel ? pc.createDataChannel('sovereign') : null;
@@ -2953,7 +3191,7 @@ function newPeerConn(id) {
   pc.onicecandidate = e => {
     if (!e.candidate) {
       document.getElementById('conn-data').value = JSON.stringify({ sdp: pc.localDescription });
-      document.getElementById('conn-status').textContent = 'Offer/answer ready — copy and share';
+      setConnStatus('Offer/answer ready — copy and share', 'var(--amber)');
       notify('SDP ready — copy and share with peer');
     }
   };
@@ -2967,25 +3205,11 @@ function setupChannel(p, ch) {
   p.dc = ch;
   ch.onopen = () => {
     p.connected = true; syncedCount++;
-    sendToPeer(p, { type:'handshake', identity: identity ? { did: identity.did, pubkey: keypair.pubHex } : null, headCid: log.length > 0 ? log[log.length-1].cid : null });
-    render(); notify('Peer connected!');
+    sendToPeer(p, { type:'handshake', identity: identity ? { did: identity.did, pubkey: keypair?.pubHex } : null, headCid: log.length > 0 ? log[log.length-1].cid : null });
+    render(); notify('Peer connected (manual SDP)!'); drawTopo();
   };
-  ch.onclose  = () => { p.connected = false; render(); };
+  ch.onclose  = () => { p.connected = false; render(); drawTopo(); };
   ch.onmessage = e => { try { handlePeerMsg(p, JSON.parse(e.data)); } catch {} };
-}
-
-function sendToPeer(p, msg) { if (p.dc?.readyState === 'open') p.dc.send(JSON.stringify(msg)); }
-function broadcastEvent(e)  { for (const p of peers.values()) sendToPeer(p, { type:'event', event: e }); }
-
-async function applyRemote(events) {
-  const myCids = new Set(log.map(e => e.cid));
-  let added = 0;
-  for (const e of events) {
-    if (myCids.has(e.cid)) continue;
-    const v = await verifyEvent(e);
-    if (v.valid) { e._verified = true; log.push(e); added++; }
-  }
-  if (added > 0) { log.sort((a,b) => a.ts - b.ts); state = replay(log); saveLog(); render(); notify(`Synced ${added} event(s) from peer`); }
 }
 
 async function initiateConnection() {
@@ -3011,9 +3235,9 @@ async function processInput() {
         if (!p.connected && p.pc.signalingState === 'have-local-offer') { await p.pc.setRemoteDescription(sdp); break; }
       }
     }
-    document.getElementById('conn-status').textContent = 'SDP processed — waiting for ICE…';
+    setConnStatus('SDP processed — waiting for ICE…', 'var(--amber)');
   } catch (err) {
-    document.getElementById('conn-status').textContent = 'Error: ' + err.message;
+    setConnStatus('Error: ' + err.message, 'var(--red)');
   }
 }
 
@@ -3021,7 +3245,7 @@ function handlePeerMsg(p, msg) {
   switch (msg.type) {
     case 'handshake':
       if (msg.identity) p.did = msg.identity.did;
-      sendToPeer(p, { type:'handshake_ack', identity: identity ? { did: identity.did, pubkey: keypair.pubHex } : null, headCid: log.length > 0 ? log[log.length-1].cid : null });
+      sendToPeer(p, { type:'handshake_ack', identity: identity ? { did: identity.did, pubkey: keypair?.pubHex } : null, headCid: log.length > 0 ? log[log.length-1].cid : null });
       if (msg.headCid !== (log.length > 0 ? log[log.length-1].cid : null)) sendToPeer(p, { type:'sync_request', afterCid: log.length > 0 ? log[log.length-1].cid : null });
       render(); break;
     case 'handshake_ack':
@@ -3036,6 +3260,17 @@ function handlePeerMsg(p, msg) {
     case 'sync_response': if (msg.events?.length) applyRemote(msg.events); break;
     case 'event': if (msg.event) applyRemote([msg.event]); break;
   }
+}
+
+// ── Network event log helper ─────────────
+function netLog(msg) {
+  const el = document.getElementById('net-event-log');
+  if (!el) return;
+  if (el.querySelector('.empty')) el.innerHTML = '';
+  const row = document.createElement('div');
+  row.style.cssText = 'padding:6px 14px;border-bottom:1px solid var(--border);font-size:10px;color:var(--text2);display:flex;gap:8px';
+  row.innerHTML = `<span style="color:var(--text3);flex-shrink:0">${new Date().toLocaleTimeString('en',{hour12:false})}</span><span>${msg}</span>`;
+  el.insertBefore(row, el.firstChild);
 }
 
 // ════════════════════════════════════════
@@ -4078,6 +4313,8 @@ setInterval(() => {
 setTimeout(() => {
   mktBoot();
   moneySync();
+  initPeerJS();
+  drawTopo();
 }, 400);
 
 </script>
