@@ -2,7 +2,7 @@
 <html lang="en">
 <head>
 <meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, viewport-fit=cover">
 <title>SOVEREIGN OS — Decentralized Intelligence Substrate</title>
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@300;400;500;600&family=IBM+Plex+Sans:wght@300;400;500;600&family=Bebas+Neue&display=swap" rel="stylesheet">
 <style>
@@ -838,6 +838,232 @@ select option { background: var(--surface); }
 *::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 99px; }
 *::-webkit-scrollbar-thumb:hover { background: var(--text3); }
 
+
+/* ══════════════════════════════════════════════════════════════
+   MOBILE RESPONSIVE — phones & small tablets
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Bottom tab bar (mobile nav replacement) ── */
+#mobile-nav {
+  display: none;
+  position: fixed; bottom: 0; left: 0; right: 0; z-index: 200;
+  background: rgba(12,14,20,0.97);
+  border-top: 1px solid var(--border2);
+  backdrop-filter: blur(20px);
+  height: 56px;
+  overflow-x: auto; overflow-y: hidden;
+  scrollbar-width: none;
+  -webkit-overflow-scrolling: touch;
+}
+#mobile-nav::-webkit-scrollbar { display: none; }
+.mobile-nav-inner {
+  display: flex; align-items: stretch;
+  min-width: max-content;
+  height: 100%;
+  padding: 0 4px;
+}
+.mob-tab {
+  display: flex; flex-direction: column; align-items: center; justify-content: center;
+  gap: 3px; padding: 0 14px;
+  font-family: var(--sans); font-size: 9px; font-weight: 600;
+  letter-spacing: .07em; text-transform: uppercase;
+  color: var(--text3); cursor: pointer; white-space: nowrap;
+  min-width: 52px; border-bottom: 2px solid transparent;
+  transition: all .14s ease; flex-shrink: 0;
+  -webkit-tap-highlight-color: transparent;
+}
+.mob-tab .mob-icon { font-size: 16px; line-height: 1; }
+.mob-tab.active { color: var(--cyan); border-bottom-color: var(--cyan); }
+.mob-tab:active { background: var(--surface2); }
+
+/* ── Touch-friendly buttons ── */
+@media (max-width: 768px) {
+  :root { --nav-h: 50px; }
+
+  /* Hide desktop top nav tabs, show mobile bottom bar */
+  .nav-tabs { display: none !important; }
+  #mobile-nav { display: block; }
+
+  /* Shrink logo area */
+  .nav-logo { padding: 0 12px 0 10px; }
+  .nav-logo-mark { font-size: 16px; }
+  .nav-logo-sub { display: none; }
+
+  /* Nav status pills — hide less important ones on small screens */
+  .ns-pill:not(:first-child) { display: none; }
+
+  /* Account for bottom nav bar */
+  #main { padding-bottom: 56px; }
+  .notif { bottom: 68px !important; right: 12px !important; max-width: calc(100vw - 24px); }
+
+  /* All multi-column grids collapse to single column */
+  .grid-2,
+  .grid-3,
+  .grid-sidebar,
+  .grid-sidebar-right,
+  .grid-3col { 
+    display: flex !important; 
+    flex-direction: column !important;
+    gap: 12px !important;
+  }
+
+  /* Remove fixed heights on grid containers — let content flow */
+  .grid-3col[style*="height"],
+  .grid-2[style*="height"],
+  [class*="grid"][style*="height:calc"] {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+
+  /* Pane scroll — full-width, proper padding */
+  .pane-scroll { padding: 12px 12px 16px; }
+
+  /* Pane header — stack on small screens */
+  .pane-hdr {
+    flex-wrap: wrap;
+    padding: 10px 12px;
+    gap: 8px;
+  }
+  .pane-hdr-title { font-size: 14px; }
+  .pane-hdr-sub { font-size: 10px; display: none; }
+  .pane-hdr-actions { 
+    width: 100%; 
+    flex-wrap: wrap;
+    gap: 6px;
+  }
+
+  /* Larger touch targets for all buttons */
+  .btn { 
+    min-height: 40px; 
+    padding: 8px 16px; 
+    font-size: 12px;
+    -webkit-tap-highlight-color: transparent;
+  }
+  .btn-sm { 
+    min-height: 36px; 
+    padding: 7px 14px; 
+    font-size: 11px; 
+  }
+  .btn-block { min-height: 44px; font-size: 13px; }
+  .btn-row { gap: 8px; margin-bottom: 10px; }
+
+  /* Inputs */
+  input, textarea, select {
+    font-size: 16px !important; /* Prevents iOS auto-zoom */
+    min-height: 40px;
+  }
+  textarea { min-height: 72px; }
+
+  /* Section cards */
+  .section { border-radius: var(--r-md); margin-bottom: 10px; }
+  .sec-header { padding: 12px 14px; }
+  .sec-title { font-size: 11px; }
+  .sec-body { padding: 12px 12px; }
+
+  /* Event log entries — simplify grid */
+  .event-entry {
+    grid-template-columns: 55px 1fr;
+    grid-template-rows: auto auto;
+    gap: 4px 8px;
+    padding: 10px 12px;
+  }
+  .evt-type { grid-column: 2; }
+  .evt-content { grid-column: 1 / -1; }
+  .evt-cid { display: none; }
+
+  /* Agent chat input area */
+  #agent-chat { padding: 10px 12px; }
+  .agent-msg { font-size: 12px; padding: 10px 12px; margin-bottom: 8px; }
+  .compose-bar, [style*="display:flex;gap:8px;align-items:flex-end;padding:10px"] {
+    padding: 8px 10px !important;
+    gap: 6px !important;
+  }
+
+  /* Full-height sections — constrain on mobile */
+  .section.full-height { max-height: 280px; }
+
+  /* Marketplace listing grid */
+  #mkt-listing-grid { grid-template-columns: 1fr !important; }
+  .mkt-listing { border-radius: var(--r-md); }
+
+  /* Proposal cards */
+  .proposal-card { padding: 12px; }
+
+  /* Token rows — make sure they don't overflow */
+  .token-row { flex-wrap: wrap; }
+  .token-addr { min-width: 0; font-size: 8px; }
+
+  /* Two-col inside sections → single col */
+  .two-col { grid-template-columns: 1fr !important; }
+
+  /* Topo canvas */
+  #topo-canvas { height: 120px; }
+
+  /* Metric rows easier to read */
+  .metric-row { padding: 9px 0; }
+  .metric-lbl, .metric-val { font-size: 12px; }
+
+  /* SCMP records */
+  .scmp-record { padding: 10px 12px; }
+
+  /* Copy buttons bigger */
+  .copy-btn { min-height: 32px; min-width: 32px; font-size: 10px; }
+
+  /* Peer ID display */
+  #my-peer-id { font-size: 10px !important; word-break: break-all; }
+
+  /* Progress bars label */
+  .progress-lbl { font-size: 10px; }
+
+  /* Ollama model input in agent header */
+  #ollama-model { width: 110px !important; font-size: 12px !important; }
+
+  /* Boot screen */
+  .boot-bar-wrap { width: 90vw; }
+  .boot-logo { font-size: clamp(36px, 12vw, 80px); }
+
+  /* DID display */
+  .did-display { font-size: 9px; }
+
+  /* Peer entry */
+  .peer-entry { padding: 10px 0; }
+  .peer-did { font-size: 8px; }
+
+  /* Inset wells / code blocks */
+  .pre-out { font-size: 8px; }
+  .code-block { font-size: 10px; }
+
+  /* Separator */
+  .sep { font-size: 10px; }
+}
+
+/* Override inline height:calc styles on grid containers for mobile */
+@media (max-width: 768px) {
+  [class*="grid-"][style] {
+    height: auto !important;
+    min-height: 0 !important;
+  }
+  /* Ensure tab panes scroll properly */
+  .tab-pane.active {
+    overflow-y: auto !important;
+  }
+  .pane-scroll {
+    overflow-y: auto;
+    /* Extra bottom padding so content clears mobile nav */
+    padding-bottom: 24px;
+  }
+  /* Agent tab — flexible height for chat */
+  #tab-agent > div[style*="flex:1"] {
+    min-height: 400px;
+  }
+}
+
+/* Very small phones */
+@media (max-width: 380px) {
+  .mob-tab { padding: 0 10px; min-width: 44px; font-size: 8px; }
+  .pane-scroll { padding: 8px 8px 12px; }
+  .btn { font-size: 11px; }
+}
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
@@ -851,6 +1077,24 @@ select option { background: var(--surface); }
   <div class="boot-bar-wrap"><div class="boot-bar-fill" id="boot-fill"></div></div>
   <div class="boot-pct" id="boot-pct">0%</div>
 </div>
+
+<!-- ── MOBILE BOTTOM NAV ── -->
+<nav id="mobile-nav" role="navigation" aria-label="Main navigation">
+  <div class="mobile-nav-inner">
+    <div class="mob-tab active" onclick="showTab('substrate')"   data-tab="substrate">  <span class="mob-icon">⬡</span>Chain</div>
+    <div class="mob-tab"        onclick="showTab('identity')"    data-tab="identity">   <span class="mob-icon">◈</span>ID</div>
+    <div class="mob-tab"        onclick="showTab('network')"     data-tab="network">    <span class="mob-icon">⟷</span>Net</div>
+    <div class="mob-tab"        onclick="showTab('tokens')"      data-tab="tokens">     <span class="mob-icon">◎</span>Tokens</div>
+    <div class="mob-tab"        onclick="showTab('governance')"  data-tab="governance"> <span class="mob-icon">🏛</span>Gov</div>
+    <div class="mob-tab"        onclick="showTab('agent')"       data-tab="agent">      <span class="mob-icon">🤖</span>Agent</div>
+    <div class="mob-tab"        onclick="showTab('sovereignty')" data-tab="sovereignty"><span class="mob-icon">🛡</span>Sovr</div>
+    <div class="mob-tab"        onclick="showTab('ethics')"      data-tab="ethics">     <span class="mob-icon">⚖</span>Ethics</div>
+    <div class="mob-tab"        onclick="showTab('scmp')"        data-tab="scmp">       <span class="mob-icon">🔐</span>SCMP</div>
+    <div class="mob-tab"        onclick="showTab('devkit')"      data-tab="devkit">     <span class="mob-icon">⚙</span>Dev</div>
+    <div class="mob-tab"        onclick="showTab('money')"       data-tab="money">      <span class="mob-icon">💠</span>Money</div>
+    <div class="mob-tab"        onclick="showTab('market')"      data-tab="market">     <span class="mob-icon">⬟</span>Market</div>
+  </div>
+</nav>
 
 <!-- ══ APP ══ -->
 <div id="app">
@@ -2279,6 +2523,15 @@ function toggleSection(hdr) {
 function showTab(name) {
   document.querySelectorAll('.nav-tab').forEach(t => t.classList.toggle('active', t.dataset.tab === name));
   document.querySelectorAll('.tab-pane').forEach(p => p.classList.toggle('active', p.id === 'tab-' + name));
+  // Sync mobile bottom nav active state + scroll it into view
+  document.querySelectorAll('.mob-tab').forEach(t => {
+    const on = t.dataset.tab === name;
+    t.classList.toggle('active', on);
+    if (on) t.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+  });
+  // Reset scroll position of newly shown pane
+  const pane = document.getElementById('tab-' + name);
+  if (pane) { const sc = pane.querySelector('.pane-scroll'); if (sc) sc.scrollTop = 0; }
 }
 
 // ════════════════════════════════════════
@@ -4317,6 +4570,22 @@ setTimeout(() => {
   drawTopo();
 }, 400);
 
+
+// ════════════════════════════════════════
+// MOBILE HELPERS
+// ════════════════════════════════════════
+function applyMobileLayout() {
+  if (window.innerWidth > 768) return;
+  // Strip inline height:calc from grid containers so CSS can take over
+  document.querySelectorAll('.grid-3col, .grid-2, .grid-3, .grid-sidebar, .grid-sidebar-right').forEach(el => {
+    el.style.height = '';
+    el.style.minHeight = '';
+  });
+}
+
+window.addEventListener('resize', applyMobileLayout);
+// Run after boot animation completes
+setTimeout(applyMobileLayout, 600);
 </script>
 </body>
 </html>
