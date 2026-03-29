@@ -1064,6 +1064,148 @@ select option { background: var(--surface); }
   .pane-scroll { padding: 8px 8px 12px; }
   .btn { font-size: 11px; }
 }
+
+/* ══════════════════════════════════════════════════════════════
+   LOGO COMMAND MENU — slides down from nav on logo click
+   ══════════════════════════════════════════════════════════════ */
+
+/* Logo clickable */
+.nav-logo {
+  cursor: pointer;
+  transition: background .14s ease;
+  position: relative;
+}
+.nav-logo:hover { background: var(--surface2); }
+.nav-logo:active { background: var(--surface3); }
+.nav-logo-caret {
+  font-size: 8px; color: var(--text3);
+  margin-left: 2px; transition: transform .2s ease;
+  line-height: 1;
+}
+.nav-logo.open .nav-logo-caret { transform: rotate(180deg); }
+
+/* Backdrop */
+#menu-backdrop {
+  display: none;
+  position: fixed; inset: 0; z-index: 499;
+  background: rgba(0,0,0,0.45);
+  backdrop-filter: blur(2px);
+  animation: bd-in .18s ease;
+}
+@keyframes bd-in { from{opacity:0} to{opacity:1} }
+#menu-backdrop.open { display: block; }
+
+/* Menu panel */
+#logo-menu {
+  display: none;
+  position: fixed;
+  top: var(--nav-h);
+  left: 0;
+  width: min(360px, 100vw);
+  z-index: 500;
+  background: var(--surface);
+  border: 1px solid var(--border2);
+  border-top: none;
+  border-radius: 0 0 var(--r-lg) var(--r-lg);
+  box-shadow: var(--z4), 0 0 40px rgba(0,212,255,0.08);
+  overflow: hidden;
+  transform-origin: top left;
+}
+#logo-menu.open {
+  display: block;
+  animation: menu-drop .2s cubic-bezier(.22,.68,0,1.2);
+}
+@keyframes menu-drop {
+  from { opacity:0; transform: translateY(-10px) scaleY(.95); }
+  to   { opacity:1; transform: translateY(0)     scaleY(1); }
+}
+
+/* Menu header */
+.lm-header {
+  padding: 16px 18px 12px;
+  background: var(--surface2);
+  border-bottom: 1px solid var(--border);
+  display: flex; align-items: center; gap: 12px;
+}
+.lm-logo-big {
+  font-family: var(--display);
+  font-size: 32px; letter-spacing: 2px; line-height: 1;
+  background: linear-gradient(135deg, var(--cyan), var(--violet));
+  -webkit-background-clip: text; -webkit-text-fill-color: transparent;
+}
+.lm-header-info { flex: 1; min-width: 0; }
+.lm-title { font-family: var(--sans); font-size: 13px; font-weight: 700; color: var(--text); letter-spacing: .05em; }
+.lm-sub   { font-size: 10px; color: var(--text3); letter-spacing: .08em; margin-top: 2px; }
+.lm-status-row { display: flex; gap: 6px; margin-top: 8px; flex-wrap: wrap; }
+.lm-chip {
+  font-size: 9px; padding: 2px 8px;
+  border-radius: 99px; border: 1px solid;
+  font-family: var(--mono); letter-spacing: .05em;
+}
+.lm-chip.green  { color: var(--green);  border-color: rgba(0,255,136,.3);  background: var(--green-t); }
+.lm-chip.cyan   { color: var(--cyan);   border-color: rgba(0,212,255,.3);  background: var(--cyan-t); }
+.lm-chip.amber  { color: var(--amber);  border-color: rgba(255,184,0,.3);  background: var(--amber-t); }
+.lm-chip.violet { color: var(--violet); border-color: rgba(162,89,255,.3); background: var(--violet-t); }
+
+/* Section label */
+.lm-section-label {
+  font-family: var(--sans); font-size: 9px; font-weight: 700;
+  letter-spacing: .16em; text-transform: uppercase;
+  color: var(--text3); padding: 10px 18px 4px;
+}
+
+/* Nav grid — all tabs in a 3-col grid */
+.lm-nav-grid {
+  display: grid; grid-template-columns: 1fr 1fr 1fr;
+  gap: 2px; padding: 4px 10px 8px;
+}
+.lm-nav-item {
+  display: flex; flex-direction: column; align-items: center;
+  gap: 4px; padding: 10px 6px;
+  border-radius: var(--r-sm);
+  cursor: pointer; transition: background .12s ease;
+  -webkit-tap-highlight-color: transparent;
+  text-align: center;
+}
+.lm-nav-item:hover  { background: var(--surface2); }
+.lm-nav-item:active { background: var(--surface3); }
+.lm-nav-item.current { background: var(--cyan-t); }
+.lm-nav-icon { font-size: 18px; line-height: 1; }
+.lm-nav-label {
+  font-family: var(--sans); font-size: 10px; font-weight: 600;
+  color: var(--text2); letter-spacing: .04em;
+  white-space: nowrap;
+}
+.lm-nav-item.current .lm-nav-label { color: var(--cyan); }
+
+/* Quick actions row */
+.lm-actions {
+  display: flex; flex-wrap: wrap; gap: 6px;
+  padding: 6px 12px 12px;
+  border-top: 1px solid var(--border);
+}
+.lm-action-btn {
+  flex: 1; min-width: 100px;
+  display: flex; align-items: center; justify-content: center; gap: 6px;
+  padding: 9px 12px;
+  font-family: var(--mono); font-size: 10px; font-weight: 600;
+  letter-spacing: .06em; text-transform: uppercase;
+  border: 1px solid var(--border2); border-radius: var(--r-sm);
+  background: transparent; color: var(--text2); cursor: pointer;
+  transition: all .12s ease;
+  -webkit-tap-highlight-color: transparent;
+}
+.lm-action-btn:hover  { border-color: var(--cyan); color: var(--cyan); background: var(--cyan-t); }
+.lm-action-btn:active { background: var(--surface3); }
+
+/* Footer */
+.lm-footer {
+  padding: 8px 18px;
+  border-top: 1px solid var(--border);
+  display: flex; align-items: center; justify-content: space-between;
+  font-size: 9px; color: var(--text3); letter-spacing: .06em;
+  background: var(--bg2);
+}
 </style>
 <script src="https://unpkg.com/peerjs@1.5.4/dist/peerjs.min.js"></script>
 </head>
@@ -1103,12 +1245,13 @@ select option { background: var(--surface); }
        TOP NAV BAR — persistent, foreground
        ════════════════════════════════════ -->
   <nav id="nav">
-    <!-- Logo -->
-    <div class="nav-logo">
+    <!-- Logo — click to open command menu -->
+    <div class="nav-logo" id="nav-logo-btn" onclick="toggleLogoMenu()" title="Open menu" role="button" aria-haspopup="true" aria-expanded="false">
       <div>
         <div class="nav-logo-mark">SOS</div>
         <div class="nav-logo-sub">v3.0</div>
       </div>
+      <span class="nav-logo-caret">▼</span>
     </div>
 
     <!-- Tab strip -->
@@ -1149,6 +1292,58 @@ select option { background: var(--surface); }
 
     <div class="nav-clock" id="topbar-clock">—</div>
   </nav>
+
+  <!-- ══ LOGO COMMAND MENU ══ -->
+  <div id="menu-backdrop" onclick="closeLogoMenu()"></div>
+  <div id="logo-menu" role="dialog" aria-label="Command menu">
+
+    <!-- Header with live status -->
+    <div class="lm-header">
+      <div class="lm-logo-big">SOS</div>
+      <div class="lm-header-info">
+        <div class="lm-title">SOVEREIGN OS</div>
+        <div class="lm-sub">DECENTRALIZED INTELLIGENCE SUBSTRATE · v3.0</div>
+        <div class="lm-status-row">
+          <span class="lm-chip cyan"  id="lm-chip-id">no identity</span>
+          <span class="lm-chip green" id="lm-chip-peers">0 peers</span>
+          <span class="lm-chip amber" id="lm-chip-chain">genesis</span>
+          <span class="lm-chip violet" id="lm-chip-ethics">ethics —</span>
+        </div>
+      </div>
+    </div>
+
+    <!-- All tabs in a grid -->
+    <div class="lm-section-label">Navigate</div>
+    <div class="lm-nav-grid">
+      <div class="lm-nav-item" onclick="menuGo('substrate')"   data-tab="substrate">  <span class="lm-nav-icon">⬡</span><span class="lm-nav-label">Substrate</span></div>
+      <div class="lm-nav-item" onclick="menuGo('identity')"    data-tab="identity">   <span class="lm-nav-icon">◈</span><span class="lm-nav-label">Identity</span></div>
+      <div class="lm-nav-item" onclick="menuGo('network')"     data-tab="network">    <span class="lm-nav-icon">⟷</span><span class="lm-nav-label">Network</span></div>
+      <div class="lm-nav-item" onclick="menuGo('tokens')"      data-tab="tokens">     <span class="lm-nav-icon">◎</span><span class="lm-nav-label">Token Ledger</span></div>
+      <div class="lm-nav-item" onclick="menuGo('governance')"  data-tab="governance"> <span class="lm-nav-icon">🏛</span><span class="lm-nav-label">Governance</span></div>
+      <div class="lm-nav-item" onclick="menuGo('agent')"       data-tab="agent">      <span class="lm-nav-icon">🤖</span><span class="lm-nav-label">AI Agent</span></div>
+      <div class="lm-nav-item" onclick="menuGo('sovereignty')" data-tab="sovereignty"><span class="lm-nav-icon">🛡</span><span class="lm-nav-label">Sovereignty</span></div>
+      <div class="lm-nav-item" onclick="menuGo('ethics')"      data-tab="ethics">     <span class="lm-nav-icon">⚖</span><span class="lm-nav-label">Ethics</span></div>
+      <div class="lm-nav-item" onclick="menuGo('scmp')"        data-tab="scmp">       <span class="lm-nav-icon">🔐</span><span class="lm-nav-label">SCMP Memory</span></div>
+      <div class="lm-nav-item" onclick="menuGo('devkit')"      data-tab="devkit">     <span class="lm-nav-icon">⚙</span><span class="lm-nav-label">DevKit</span></div>
+      <div class="lm-nav-item" onclick="menuGo('money')"       data-tab="money">      <span class="lm-nav-icon">💠</span><span class="lm-nav-label">Money</span></div>
+      <div class="lm-nav-item" onclick="menuGo('market')"      data-tab="market">     <span class="lm-nav-icon">⬟</span><span class="lm-nav-label">Marketplace</span></div>
+    </div>
+
+    <!-- Quick actions -->
+    <div class="lm-section-label">Quick Actions</div>
+    <div class="lm-actions">
+      <button class="lm-action-btn" onclick="menuAction('identity')">◈ Gen Identity</button>
+      <button class="lm-action-btn" onclick="menuAction('snapshot')">📸 Snapshot</button>
+      <button class="lm-action-btn" onclick="menuAction('summarize')">🤖 AI Summary</button>
+      <button class="lm-action-btn" onclick="menuAction('hash')">⬡ Compute Hash</button>
+    </div>
+
+    <!-- Footer -->
+    <div class="lm-footer">
+      <span id="lm-footer-head">HEAD: GENESIS</span>
+      <span id="lm-footer-time">—</span>
+    </div>
+  </div>
 
   <!-- ════════════════════════════════════
        MAIN CONTENT AREA
@@ -4570,6 +4765,93 @@ setTimeout(() => {
   drawTopo();
 }, 400);
 
+
+// ════════════════════════════════════════
+// LOGO COMMAND MENU
+// ════════════════════════════════════════
+let logoMenuOpen = false;
+
+function toggleLogoMenu() {
+  logoMenuOpen ? closeLogoMenu() : openLogoMenu();
+}
+
+function openLogoMenu() {
+  logoMenuOpen = true;
+  const menu = document.getElementById('logo-menu');
+  const backdrop = document.getElementById('menu-backdrop');
+  const logoBtn = document.getElementById('nav-logo-btn');
+  menu.classList.add('open');
+  backdrop.classList.add('open');
+  logoBtn.classList.add('open');
+  logoBtn.setAttribute('aria-expanded', 'true');
+  // Sync "current" highlight to active tab
+  const activeTab = document.querySelector('.nav-tab.active')?.dataset?.tab;
+  document.querySelectorAll('.lm-nav-item').forEach(el => {
+    el.classList.toggle('current', el.dataset.tab === activeTab);
+  });
+  // Refresh live status chips
+  updateMenuChips();
+}
+
+function closeLogoMenu() {
+  logoMenuOpen = false;
+  document.getElementById('logo-menu').classList.remove('open');
+  document.getElementById('menu-backdrop').classList.remove('open');
+  const logoBtn = document.getElementById('nav-logo-btn');
+  logoBtn.classList.remove('open');
+  logoBtn.setAttribute('aria-expanded', 'false');
+}
+
+function menuGo(tab) {
+  showTab(tab);
+  closeLogoMenu();
+}
+
+function menuAction(action) {
+  closeLogoMenu();
+  switch(action) {
+    case 'identity':
+      showTab('identity');
+      setTimeout(() => { const btn = document.querySelector('#tab-identity .btn-g'); if(btn) btn.click(); }, 80);
+      break;
+    case 'snapshot':
+      emitSnapshot();
+      break;
+    case 'summarize':
+      showTab('agent');
+      setTimeout(() => agentRunSummary(), 80);
+      break;
+    case 'hash':
+      computeAndShowHash();
+      break;
+  }
+}
+
+function updateMenuChips() {
+  // ID chip
+  const idEl = document.getElementById('lm-chip-id');
+  if (idEl) idEl.textContent = identity ? identity.did.slice(0,20) + '…' : 'no identity';
+  // Peers chip
+  const peersEl = document.getElementById('lm-chip-peers');
+  if (peersEl) {
+    const n = [...peers.values()].filter(p=>p.connected).length;
+    peersEl.textContent = n + ' peer' + (n !== 1 ? 's' : '');
+  }
+  // Chain chip
+  const chainEl = document.getElementById('lm-chip-chain');
+  if (chainEl) chainEl.textContent = log.length > 0 ? log.length + ' events' : 'genesis';
+  // Ethics chip
+  const ethicsEl = document.getElementById('lm-chip-ethics');
+  if (ethicsEl) ethicsEl.textContent = 'ethics ' + (ethScore !== undefined ? Math.round(ethScore*100) + '%' : '—');
+  // Footer
+  const footerHead = document.getElementById('lm-footer-head');
+  if (footerHead) footerHead.textContent = 'HEAD: ' + (log.length > 0 ? log[log.length-1].cid.slice(0,14)+'…' : 'GENESIS');
+  const footerTime = document.getElementById('lm-footer-time');
+  if (footerTime) footerTime.textContent = new Date().toLocaleTimeString('en',{hour12:false});
+}
+
+// Close on Escape key
+document.addEventListener('keydown', e => { if (e.key === 'Escape' && logoMenuOpen) closeLogoMenu(); });
 
 // ════════════════════════════════════════
 // MOBILE HELPERS
