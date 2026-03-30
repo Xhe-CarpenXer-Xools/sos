@@ -13,6 +13,7 @@ import { notify } from '../ui/notifications.js';
 import { saveLog } from '../core/persistence.js';
 
 let reconnectTimer = null;
+let _reinitialising = false; // guard against destroy() firing 'disconnected' and double-initing
 
 /**
  * Build PeerJS configuration based on relay mode
@@ -79,9 +80,11 @@ export function initPeerJS() {
             // reinitialise immediately with a fresh server-assigned ID.
             netLog('Stale Peer ID detected — clearing and retrying with a new ID…');
             localStorage.removeItem('sos-peer-id-v8');
+            _reinitialising = true;          // prevent disconnected event from also scheduling reconnect
             appState.peerJS.destroy();
             appState.peerJS = null;
             appState.peerJSReady = false;
+            _reinitialising = false;
             initPeerJS();
             return;
         }
@@ -90,6 +93,7 @@ export function initPeerJS() {
     });
 
     appState.peerJS.on('disconnected', () => {
+        if (_reinitialising) return;   // we triggered this destroy intentionally — ignore it
         netLog('Disconnected — scheduling reconnect…');
         scheduleReconnect();
     });
