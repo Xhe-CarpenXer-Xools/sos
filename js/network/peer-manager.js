@@ -73,6 +73,19 @@ export function initPeerJS() {
     appState.peerJS.on('error', err => {
         setConnStatus('PeerJS error: ' + err.type, 'var(--red)');
         netLog('ERROR: ' + err.message);
+
+        if (err.type === 'unavailable-id') {
+            // Stored ID is no longer registered on the broker — clear it and
+            // reinitialise immediately with a fresh server-assigned ID.
+            netLog('Stale Peer ID detected — clearing and retrying with a new ID…');
+            localStorage.removeItem('sos-peer-id-v8');
+            appState.peerJS.destroy();
+            appState.peerJS = null;
+            appState.peerJSReady = false;
+            initPeerJS();
+            return;
+        }
+
         scheduleReconnect();
     });
 
