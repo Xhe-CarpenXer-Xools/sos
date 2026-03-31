@@ -189,7 +189,7 @@ export function initDesktop() {
     if (!iconGrid) return;
 
     iconGrid.innerHTML = DESKTOP_ICONS.map(icon => `
-        <div class="desktop-icon" ondblclick="window.SOS?.openWindow('${icon.id}')"
+        <div class="desktop-icon" onclick="window.SOS?.openWindow('${icon.id}')"
             style="display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:8px;border-radius:8px;font-size:10px;color:var(--text2)">
             <span style="font-size:24px">${icon.icon}</span>
             <span>${esc(icon.label)}</span>
