@@ -40,7 +40,7 @@ window.SOS = {
     scmpPut, scmpGet, scmpGrantAccess, scmpRotateKey, scmpVerifyAll,
 
     // VM
-    vmExecuteWorker: vmRunFromUI, vmKillWorker, vmRunExample, vmCompile, vmAudit, vmClear, vmPublishApp,
+    vmExecuteWorker: vmRunFromUI, vmRunFromUI, vmKillWorker, vmRunExample, vmCompile, vmAudit, vmClear, vmPublishApp,
     fheEncrypt, fheCompute, fheDecrypt,
 
     // Ledger
