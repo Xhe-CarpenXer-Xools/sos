@@ -718,6 +718,712 @@
                     <div id="desktop-taskbar" style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap"></div>
                     <div id="desktop-icons" style="display:grid;grid-template-columns:repeat(auto-fill,80px);gap:8px"></div>
                     <div id="window-layer" style="position:absolute;inset:0;pointer-events:none">
+                        <div style="pointer-events:none"></div>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- NOTIFICATIONS -->
+    <div id="notif"></div>
+
+    <!-- MOBILE BOTTOM BAR -->
+    <div id="mob-bar">
+        <div class="mob-tab active" data-tab="kernel">⬡<br>Kernel</div>
+        <div class="mob-tab" data-tab="identity">🔑<br>ID</div>
+        <div class="mob-tab" data-tab="network">🌐<br>Net</div>
+        <div class="mob-tab" data-tab="agents">🤖<br>AI</div>
+        <div class="mob-tab" data-tab="observe">📊<br>Obs</div>
+    </div>
+
+    <!-- LOAD MODULAR JS -->
+    <script type="module" src="js/app.js"></script>
+</body>
+</html>                <div class="nav-tab" data-tab="identity"><span class="tdot"></span>Identity</div>
+                <div class="nav-tab" data-tab="network"><span class="tdot"></span>Network</div>
+                <div class="nav-tab" data-tab="storage"><span class="tdot"></span>Storage</div>
+                <div class="nav-tab" data-tab="vm"><span class="tdot"></span>VM</div>
+                <div class="nav-tab" data-tab="ledger"><span class="tdot"></span>Ledger</div>
+                <div class="nav-tab" data-tab="tokens"><span class="tdot"></span>Tokens</div>
+                <div class="nav-tab" data-tab="governance"><span class="tdot"></span>Gov</div>
+                <div class="nav-tab" data-tab="agents"><span class="tdot"></span>Agents</div>
+                <div class="nav-tab" data-tab="security"><span class="tdot"></span>Security</div>
+                <div class="nav-tab" data-tab="devkit"><span class="tdot"></span>DevKit</div>
+                <div class="nav-tab" data-tab="desktop"><span class="tdot"></span>Desktop</div>
+                <div class="nav-tab" data-tab="observe"><span class="tdot"></span>Observe</div>
+            </div>
+            <div class="nav-status">
+                <div class="ns-pill"><span class="ns-dot" id="dot-kernel"></span><span id="lbl-kernel">KERNEL</span></div>
+                <div class="ns-pill"><span class="ns-dot" id="dot-id"></span><span id="lbl-id">ID</span></div>
+                <div class="ns-pill"><span class="ns-dot" id="dot-net"></span><span id="lbl-net">NET</span></div>
+                <div class="ns-pill" id="release-status" onclick="SOS.showReleaseVerificationModal()" style="cursor:pointer"></div>
+            </div>
+            <div class="nav-clock" id="nav-clock">00:00:00</div>
+            <div class="nav-did-chip" id="nav-did">No identity</div>
+        </nav>
+
+        <!-- MAIN CONTENT -->
+        <div id="main">
+            <!-- TAB: KERNEL -->
+            <div class="tab-pane active" id="tab-kernel">
+                <div class="pane-hdr">
+                    <div>
+                        <div class="pane-hdr-title">KERNEL DASHBOARD</div>
+                        <div class="pane-hdr-sub">Event log • System state • Quick actions</div>
+                    </div>
+                    <div class="pane-hdr-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="SOS.exportEncryptedBackup()">Export Backup</button>
+                        <button class="btn btn-c btn-sm" onclick="SOS.archiveOldEvents()">Archive Events</button>
+                    </div>
+                </div>
+                <div class="pane-scroll">
+                    <div class="stats-grid" style="margin-bottom:14px">
+                        <div class="stat"><div class="stat-lbl">Events</div><div class="stat-val c" id="event-count">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Peers</div><div class="stat-val g" id="peer-count">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Archived</div><div class="stat-val v" id="archive-count">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Bloom</div><div class="stat-val a" id="bloom-size">0</div></div>
+                    </div>
+                    <div class="grid-2col">
+                        <div class="section">
+                            <div class="sec-header" onclick="SOS.toggleSection(this)">
+                                <span class="sec-title">Event Log</span>
+                                <span class="sec-chevron">▼</span>
+                            </div>
+                            <div class="sec-body" id="event-log" style="max-height:300px;overflow-y:auto">
+                                <div class="empty">No events yet</div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <div class="sec-header" onclick="SOS.toggleSection(this)">
+                                <span class="sec-title">Quick Compose</span>
+                                <span class="sec-chevron">▼</span>
+                            </div>
+                            <div class="sec-body">
+                                <select id="compose-type" style="margin-bottom:8px;width:100%">
+                                    <option value="message">Message</option>
+                                    <option value="idea">Idea</option>
+                                    <option value="contribution">Contribution</option>
+                                </select>
+                                <textarea id="compose-input" placeholder="Enter content..." style="width:100%;margin-bottom:8px"></textarea>
+                                <button class="btn btn-c btn-block btn-sm" onclick="SOS.emitFromCompose()">Emit Event</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">Archive Status</span></div>
+                        <div class="sec-body">
+                            <div style="font-size:10px;color:var(--text3)" id="archive-merkle-root">No archive yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: IDENTITY -->
+            <div class="tab-pane" id="tab-identity">
+                <div class="pane-hdr">
+                    <div>
+                        <div class="pane-hdr-title">IDENTITY</div>
+                        <div class="pane-hdr-sub">DID generation • Key management • Recovery • PBKDF2 vault</div>
+                    </div>
+                    <div class="pane-hdr-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="SOS.testSign()">Test Sign</button>
+                        <button class="btn btn-ghost btn-sm" onclick="SOS.exportIdentity()">Export</button>
+                        <button class="btn btn-c btn-sm" onclick="SOS.createIdentity()">Generate DID</button>
+                    </div>
+                </div>
+                <div class="pane-scroll">
+                    <div class="grid-2col">
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Current Identity</span></div>
+                            <div class="sec-body" id="id-display">
+                                <div class="empty">No identity — click Generate DID</div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">PBKDF2 Vault</span></div>
+                            <div class="sec-body">
+                                <input type="password" id="vault-pw" placeholder="Vault password" style="width:100%;margin-bottom:8px">
+                                <input type="password" id="vault-pw2" placeholder="Confirm password" style="width:100%;margin-bottom:8px">
+                                <button class="btn btn-v btn-sm btn-block" onclick="SOS.setVaultPassword()">Set Vault Password</button>
+                                <pre class="pre-out" id="vault-status" style="margin-top:8px;min-height:60px">No vault configured</pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">Recovery Shards (3-of-5)</span></div>
+                        <div class="sec-body">
+                            <button class="btn btn-ghost btn-sm" onclick="SOS.generateRecoveryShards()">Generate Shards</button>
+                            <pre class="pre-out" id="recovery-shards" style="margin-top:8px;min-height:80px">—</pre>
+                            <div style="margin-top:8px">
+                                <textarea id="recovery-input" placeholder="Paste shard to recover..." style="width:100%;margin-bottom:8px"></textarea>
+                                <button class="btn btn-ghost btn-sm" onclick="SOS.recoverFromShard()">Recover from Shard</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">Attestation</span></div>
+                        <div class="sec-body">
+                            <textarea id="attest-data" placeholder="Data to attest..." style="width:100%;margin-bottom:8px"></textarea>
+                            <button class="btn btn-ghost btn-sm" onclick="SOS.signAttestation()">Sign Attestation</button>
+                            <pre class="pre-out" id="attest-out" style="margin-top:8px;min-height:80px">—</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: NETWORK -->
+            <div class="tab-pane" id="tab-network">
+                <div class="pane-hdr">
+                    <div>
+                        <div class="pane-hdr-title">NETWORK</div>
+                        <div class="pane-hdr-sub">P2P WebRTC • Bloom gossip • Relay mode • QR pairing</div>
+                    </div>
+                    <div class="pane-hdr-actions">
+                        <span class="conn-indicator conn-direct" id="relay-mode-badge" onclick="SOS.toggleRelayMode()" style="cursor:pointer">⟷ Direct P2P</span>
+                        <button class="btn btn-v btn-sm" onclick="SOS.showPairingQRModal()">QR Pairing</button>
+                    </div>
+                </div>
+                <div class="pane-scroll">
+                    <div class="stats-grid" style="margin-bottom:14px">
+                        <div class="stat"><div class="stat-lbl">Peers</div><div class="stat-val g" id="net-peers">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Gossip</div><div class="stat-val c" id="gossip-count">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Deduped</div><div class="stat-val a" id="bloom-deduped">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Reconnects</div><div class="stat-val v" id="reconnect-count">0</div></div>
+                    </div>
+                    <div class="grid-2col">
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Peer Connection</span></div>
+                            <div class="sec-body">
+                                <div style="margin-bottom:8px">
+                                    <div style="font-size:10px;color:var(--text3);margin-bottom:4px">My Peer ID
+                                        <span class="tag tag-live" id="peerjs-status-badge" style="margin-left:6px">offline</span>
+                                    </div>
+                                    <div style="display:flex;gap:8px">
+                                        <div class="code-block" style="flex:1;font-size:9px" id="my-peer-id">Initializing…</div>
+                                        <button class="btn btn-ghost btn-sm" onclick="SOS.copyPeerId()">Copy</button>
+                                    </div>
+                                </div>
+                                <input id="remote-peer-id" placeholder="Remote Peer ID" style="width:100%;margin-bottom:8px">
+                                <button class="btn btn-c btn-block btn-sm" id="auto-connect-btn" onclick="SOS.autoConnect()">Connect Peer</button>
+                                <div style="margin-top:8px;font-size:10px" id="conn-status">Not connected</div>
+                                <div style="margin-top:4px;font-size:9px" id="peer-state-verify"></div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Network Topology</span></div>
+                            <div class="sec-body">
+                                <canvas id="topo-canvas" width="200" height="150" style="width:100%;background:var(--bg2);border-radius:8px"></canvas>
+                                <div style="display:flex;gap:8px;margin-top:8px;font-size:9px;color:var(--text3)">
+                                    <span>N=<span id="bft-n">1</span></span>
+                                    <span>f=<span id="bft-f">0</span></span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">Offline Pairing</span></div>
+                        <div class="sec-body">
+                            <textarea id="offline-blob" placeholder="Paste pairing blob here..." style="width:100%;height:60px;margin-bottom:8px"></textarea>
+                            <div style="display:flex;gap:8px">
+                                <button class="btn btn-ghost btn-sm" onclick="SOS.exportOfflinePairing()">Export Blob</button>
+                                <button class="btn btn-c btn-sm" onclick="SOS.importOfflinePairing()">Import Blob</button>
+                                <button class="btn btn-v btn-sm" onclick="SOS.showQRScanner()">Scan QR</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">Network Log</span></div>
+                        <div class="sec-body" id="net-log" style="max-height:200px;overflow-y:auto">
+                            <div class="empty">No network activity</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: STORAGE -->
+            <div class="tab-pane" id="tab-storage">
+                <div class="pane-hdr">
+                    <div>
+                        <div class="pane-hdr-title">SCMP v2 STORAGE</div>
+                        <div class="pane-hdr-sub">Content-addressed • Encrypted shards • Capability tokens</div>
+                    </div>
+                </div>
+                <div class="pane-scroll">
+                    <div class="stats-grid" style="margin-bottom:14px">
+                        <div class="stat"><div class="stat-lbl">Records</div><div class="stat-val c" id="scmp-records">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Shards</div><div class="stat-val g" id="scmp-shards">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Size</div><div class="stat-val a" id="scmp-size">0 B</div></div>
+                        <div class="stat"><div class="stat-lbl">Cap Tokens</div><div class="stat-val v" id="cap-tokens-active">0</div></div>
+                    </div>
+                    <div class="grid-2col">
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Record Index</span></div>
+                            <div class="sec-body" id="scmp-index" style="max-height:200px;overflow-y:auto">
+                                <div class="empty">No records</div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Capability Tokens</span></div>
+                            <div class="sec-body">
+                                <div style="display:flex;gap:4px;font-size:10px;color:var(--text3);margin-bottom:8px">
+                                    Active: <span id="cap-tokens-active" style="color:var(--green)">0</span> /
+                                    Total: <span id="cap-tokens-total">0</span>
+                                </div>
+                                <div id="cap-tokens-list" style="max-height:200px;overflow-y:auto">
+                                    <div class="empty">No active capability tokens</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: VM -->
+            <div class="tab-pane" id="tab-vm">
+                <div class="pane-hdr">
+                    <div>
+                        <div class="pane-hdr-title">WEB WORKER VM</div>
+                        <div class="pane-hdr-sub">Sandboxed execution • Gas metering • Timeout kill</div>
+                    </div>
+                    <div class="pane-hdr-actions">
+                        <span class="conn-indicator" id="worker-status">⬜ Worker: idle</span>
+                        <button class="btn btn-r btn-sm" onclick="SOS.vmKillWorker()">Kill Worker</button>
+                    </div>
+                </div>
+                <div class="pane-scroll">
+                    <div class="stats-grid" style="margin-bottom:14px">
+                        <div class="stat"><div class="stat-lbl">Gas Used</div><div class="stat-val c" id="gas-used">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Gas Limit</div><div class="stat-val a" id="gas-limit">100,000</div></div>
+                        <div class="stat"><div class="stat-lbl">Timeout</div><div class="stat-val v" id="vm-timeout">5s</div></div>
+                    </div>
+                    <div class="progress-bar" style="margin-bottom:14px"><div class="progress-fill c" id="gas-bar" style="width:0%"></div></div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">JSONFlow IR</span></div>
+                        <div class="sec-body">
+                            <textarea id="vm-code" placeholder='{"workflow":"my-workflow","steps":[{"id":"s1","type":"compute","gas":500}]}' style="width:100%;height:120px;font-size:10px"></textarea>
+                            <div style="display:flex;gap:8px;margin-top:8px">
+                                <button class="btn btn-c btn-sm" onclick="SOS.vmRunFromUI()">Run</button>
+                                <button class="btn btn-ghost btn-sm" onclick="SOS.vmRunExample()">Load Example</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">Execution Output</span></div>
+                        <div class="sec-body">
+                            <pre class="pre-out" id="vm-output" style="min-height:100px">Waiting for execution…</pre>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">Verifiable Receipts</span></div>
+                        <div class="sec-body" id="vm-receipts" style="max-height:150px;overflow-y:auto">
+                            <div class="empty">No receipts yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: AGENTS -->
+            <div class="tab-pane" id="tab-agents">
+                <div class="pane-hdr">
+                    <div>
+                        <div class="pane-hdr-title">AI AGENTS</div>
+                        <div class="pane-hdr-sub">Multi-agent orchestration • Verifiable receipts • On-device AI</div>
+                    </div>
+                    <div class="pane-hdr-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="SOS.clearAgentChat()">Clear Chat</button>
+                        <button class="btn btn-v btn-sm" onclick="SOS.agentSummary()">Summary</button>
+                        <span style="font-size:10px;color:var(--violet)" id="active-agent-badge">Substrate Oracle</span>
+                    </div>
+                </div>
+                <div class="pane-scroll">
+                    <div class="grid-2col">
+                        <div class="section" style="min-height:400px">
+                            <div class="sec-header"><span class="sec-title">Agent Chat</span></div>
+                            <div class="sec-body" style="display:flex;flex-direction:column;height:350px">
+                                <div id="agent-chat" style="flex:1;overflow-y:auto;padding:8px;background:var(--bg2);border-radius:8px;margin-bottom:8px">
+                                    <div class="agent-bubble agent-sys">Agents ready. Select an agent and start chatting.</div>
+                                </div>
+                                <select id="agent-select" style="margin-bottom:8px" onchange="SOS.selectAgent(this.value)">
+                                    <option value="oracle">Substrate Oracle</option>
+                                    <option value="analyst">Economic Analyst</option>
+                                    <option value="auditor">Security Auditor</option>
+                                    <option value="builder">Workflow Builder</option>
+                                </select>
+                                <div style="display:flex;gap:8px">
+                                    <textarea id="agent-input" placeholder="Ask the agent..." style="flex:1;height:40px;resize:none" onkeydown="if(event.key==='Enter'&&!event.shiftKey){event.preventDefault();SOS.sendAgentMessage()}"></textarea>
+                                    <button class="btn btn-c btn-sm" onclick="SOS.sendAgentMessage()">Send</button>
+                                </div>
+                            </div>
+                        </div>
+                        <div>
+                            <div class="section">
+                                <div class="sec-header"><span class="sec-title">Agent Memory</span></div>
+                                <div class="sec-body" id="agent-memory" style="max-height:150px;overflow-y:auto">
+                                    <div class="empty">No memories</div>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <div class="sec-header"><span class="sec-title">Verifiable Receipts</span></div>
+                                <div class="sec-body" id="agent-receipts" style="max-height:150px;overflow-y:auto">
+                                    <div class="empty">No receipts</div>
+                                </div>
+                            </div>
+                            <div class="section">
+                                <div class="sec-header"><span class="sec-title">Task Queue</span></div>
+                                <div class="sec-body" id="task-queue" style="max-height:150px;overflow-y:auto">
+                                    <div class="empty">No tasks queued</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: SECURITY -->
+            <div class="tab-pane" id="tab-security">
+                <div class="pane-hdr">
+                    <div>
+                        <div class="pane-hdr-title">SECURITY</div>
+                        <div class="pane-hdr-sub">Ethics engine • Threat analysis • Release verification</div>
+                    </div>
+                </div>
+                <div class="pane-scroll">
+                    <div class="grid-2col">
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Ethics Score</span></div>
+                            <div class="sec-body" style="text-align:center">
+                                <div style="font-size:48px;font-family:var(--display);color:var(--green)" id="stat-ethics">100%</div>
+                                <div id="ethics-mini"></div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Release Verification</span></div>
+                            <div class="sec-body" id="release-detail">
+                                <div class="empty">Verifying...</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">Ethics Constraints</span></div>
+                        <div class="sec-body" id="ethics-full"></div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">Add Constraint</span></div>
+                        <div class="sec-body">
+                            <div style="display:flex;gap:8px;margin-bottom:8px">
+                                <input id="ethic-name" placeholder="Name" style="flex:1">
+                                <input id="ethic-patterns" placeholder="patterns,comma,separated" style="flex:2">
+                                <button class="btn btn-ghost btn-sm" onclick="SOS.addConstraint()">Add</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: OBSERVE -->
+            <div class="tab-pane" id="tab-observe">
+                <div class="pane-hdr">
+                    <div>
+                        <div class="pane-hdr-title">OBSERVABILITY</div>
+                        <div class="pane-hdr-sub">System logs • Performance metrics</div>
+                    </div>
+                    <div class="pane-hdr-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="SOS.obsClear()">Clear</button>
+                    </div>
+                </div>
+                <div class="pane-scroll">
+                    <div class="stats-grid" style="margin-bottom:14px">
+                        <div class="stat"><div class="stat-lbl">Events</div><div class="stat-val c" id="obs-events">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Peers</div><div class="stat-val g" id="obs-peers">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Heap</div><div class="stat-val a" id="obs-heap">0 KB</div></div>
+                        <div class="stat"><div class="stat-lbl">Archived</div><div class="stat-val v" id="obs-archived">0</div></div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header">
+                            <span class="sec-title">System Log</span>
+                            <div style="display:flex;gap:4px">
+                                <button class="btn btn-ghost btn-sm active" onclick="SOS.obsFilter('ALL')">ALL</button>
+                                <button class="btn btn-ghost btn-sm" onclick="SOS.obsFilter('KERNEL')">KERNEL</button>
+                                <button class="btn btn-ghost btn-sm" onclick="SOS.obsFilter('NET')">NET</button>
+                                <button class="btn btn-ghost btn-sm" onclick="SOS.obsFilter('VM')">VM</button>
+                                <button class="btn btn-ghost btn-sm" onclick="SOS.obsFilter('SECURITY')">SEC</button>
+                            </div>
+                        </div>
+                        <div class="sec-body" id="obs-trace" style="max-height:400px;overflow-y:auto">
+                            <div class="empty">No log entries yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Placeholder panes -->
+            <!-- TAB: LEDGER -->
+            <div class="tab-pane" id="tab-ledger">
+                <div class="pane-hdr">
+                    <div>
+                        <div class="pane-hdr-title">LEDGER</div>
+                        <div class="pane-hdr-sub">Hash-chained blocks • Merkle proofs • Transactions</div>
+                    </div>
+                    <div class="pane-hdr-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="SOS.generateMerkleProof()">Merkle Proof</button>
+                        <button class="btn btn-ghost btn-sm" onclick="SOS.ledgerExport()">Export</button>
+                        <button class="btn btn-c btn-sm" onclick="SOS.ledgerSeal()">Seal Block</button>
+                    </div>
+                </div>
+                <div class="pane-scroll">
+                    <div class="stats-grid" style="margin-bottom:14px">
+                        <div class="stat"><div class="stat-lbl">Blocks</div><div class="stat-val c" id="ledger-blocks">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Transactions</div><div class="stat-val g" id="ledger-txcount">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Pending</div><div class="stat-val a" id="ledger-pending">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Chain Hash</div><div class="stat-val v" id="ledger-chainhash" style="font-size:8px">—</div></div>
+                    </div>
+                    <div class="grid-2col">
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Submit Transaction</span></div>
+                            <div class="sec-body">
+                                <select id="tx-type" style="width:100%;margin-bottom:8px">
+                                    <option value="TRANSFER">Transfer</option>
+                                    <option value="MINT">Mint</option>
+                                    <option value="STAKE">Stake</option>
+                                    <option value="NOTE">Note</option>
+                                </select>
+                                <input id="tx-to" placeholder="To (DID or address)" style="width:100%;margin-bottom:8px">
+                                <input id="tx-amount" type="number" placeholder="Amount" style="width:100%;margin-bottom:8px">
+                                <textarea id="tx-memo" placeholder="Memo (optional)" style="width:100%;height:48px;margin-bottom:8px"></textarea>
+                                <button class="btn btn-c btn-block btn-sm" onclick="SOS.ledgerSubmitTx()">Submit TX</button>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Pending Transactions</span></div>
+                            <div class="sec-body" id="ledger-pending-list" style="max-height:200px;overflow-y:auto">
+                                <div class="empty">No pending transactions</div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">Block Chain</span></div>
+                        <div class="sec-body" id="ledger-chain" style="max-height:300px;overflow-y:auto">
+                            <div class="empty">No blocks sealed yet — submit transactions and seal a block</div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">Merkle Proof Verifier</span></div>
+                        <div class="sec-body">
+                            <input id="merkle-txid" placeholder="Transaction ID to prove" style="width:100%;margin-bottom:8px">
+                            <button class="btn btn-ghost btn-sm" onclick="SOS.generateMerkleProof()">Generate Proof</button>
+                            <pre class="pre-out" id="merkle-proof-out" style="margin-top:8px;min-height:60px">—</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: TOKENS -->
+            <div class="tab-pane" id="tab-tokens">
+                <div class="pane-hdr">
+                    <div>
+                        <div class="pane-hdr-title">TOKENS</div>
+                        <div class="pane-hdr-sub">SVGT issuance • Staking • Payment channels</div>
+                    </div>
+                    <div class="pane-hdr-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="SOS.claimYield()">Claim Yield</button>
+                        <button class="btn btn-c btn-sm" onclick="SOS.mintTokensUI()">Mint Tokens</button>
+                    </div>
+                </div>
+                <div class="pane-scroll">
+                    <div class="stats-grid" style="margin-bottom:14px">
+                        <div class="stat"><div class="stat-lbl">My Balance</div><div class="stat-val c" id="tok-balance">0 SVGT</div></div>
+                        <div class="stat"><div class="stat-lbl">Staked</div><div class="stat-val g" id="tok-staked">0 SVGT</div></div>
+                        <div class="stat"><div class="stat-lbl">Yield</div><div class="stat-val a" id="tok-yield">0.00%</div></div>
+                        <div class="stat"><div class="stat-lbl">Channels</div><div class="stat-val v" id="tok-channels">0</div></div>
+                    </div>
+                    <div class="grid-2col">
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Mint SVGT</span></div>
+                            <div class="sec-body">
+                                <input id="mint-to" placeholder="Recipient DID" style="width:100%;margin-bottom:8px">
+                                <input id="mint-amount" type="number" placeholder="Amount to mint" style="width:100%;margin-bottom:8px">
+                                <button class="btn btn-c btn-block btn-sm" onclick="SOS.mintTokensUI()">Mint</button>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Transfer</span></div>
+                            <div class="sec-body">
+                                <input id="transfer-to" placeholder="Recipient DID" style="width:100%;margin-bottom:8px">
+                                <input id="transfer-amount" type="number" placeholder="Amount" style="width:100%;margin-bottom:8px">
+                                <button class="btn btn-c btn-block btn-sm" onclick="SOS.transferTokens()">Transfer</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid-2col">
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Staking</span></div>
+                            <div class="sec-body">
+                                <input id="stake-amount" type="number" placeholder="Amount to stake" style="width:100%;margin-bottom:8px">
+                                <div style="display:flex;gap:8px">
+                                    <button class="btn btn-c btn-sm btn-block" onclick="SOS.stakeTokens()">Stake</button>
+                                    <button class="btn btn-ghost btn-sm btn-block" onclick="SOS.unstakeTokens()">Unstake</button>
+                                </div>
+                                <div style="margin-top:8px;font-size:10px;color:var(--text3)">APY: 4.2% • Lock: 7 days</div>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Payment Channel</span></div>
+                            <div class="sec-body">
+                                <input id="chan-peer" placeholder="Peer DID" style="width:100%;margin-bottom:8px">
+                                <input id="chan-deposit" type="number" placeholder="Deposit amount" style="width:100%;margin-bottom:8px">
+                                <button class="btn btn-v btn-block btn-sm" onclick="SOS.openChannel()">Open Channel</button>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">Balances &amp; Distribution</span></div>
+                        <div class="sec-body" id="tok-balances" style="max-height:200px;overflow-y:auto">
+                            <div class="empty">No token holders yet</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: GOVERNANCE -->
+            <div class="tab-pane" id="tab-governance">
+                <div class="pane-hdr">
+                    <div>
+                        <div class="pane-hdr-title">GOVERNANCE</div>
+                        <div class="pane-hdr-sub">Proposals • Voting • Delegation • Timelock</div>
+                    </div>
+                    <div class="pane-hdr-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="SOS.runDriftAnalysis()">Drift Analysis</button>
+                        <button class="btn btn-ghost btn-sm" onclick="SOS.delegateVotes()">Delegate</button>
+                        <button class="btn btn-c btn-sm" onclick="SOS.createProposal()">New Proposal</button>
+                    </div>
+                </div>
+                <div class="pane-scroll">
+                    <div class="stats-grid" style="margin-bottom:14px">
+                        <div class="stat"><div class="stat-lbl">Proposals</div><div class="stat-val c" id="gov-proposals">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Active</div><div class="stat-val g" id="gov-active">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Passed</div><div class="stat-val a" id="gov-passed">0</div></div>
+                        <div class="stat"><div class="stat-lbl">Quorum</div><div class="stat-val v" id="gov-quorum">51%</div></div>
+                    </div>
+                    <div class="grid-2col">
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Create Proposal</span></div>
+                            <div class="sec-body">
+                                <input id="prop-title" placeholder="Proposal title" style="width:100%;margin-bottom:8px">
+                                <textarea id="prop-desc" placeholder="Description..." style="width:100%;height:64px;margin-bottom:8px"></textarea>
+                                <select id="prop-type" style="width:100%;margin-bottom:8px">
+                                    <option value="parameter">Parameter Change</option>
+                                    <option value="upgrade">Protocol Upgrade</option>
+                                    <option value="treasury">Treasury Spend</option>
+                                    <option value="text">Text Proposal</option>
+                                </select>
+                                <input id="prop-timelock" type="number" placeholder="Timelock (hours)" value="24" style="width:100%;margin-bottom:8px">
+                                <button class="btn btn-c btn-block btn-sm" onclick="SOS.createProposal()">Submit Proposal</button>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Delegation</span></div>
+                            <div class="sec-body">
+                                <input id="delegate-to" placeholder="Delegate to DID" style="width:100%;margin-bottom:8px">
+                                <input id="delegate-weight" type="number" placeholder="Vote weight %" value="100" style="width:100%;margin-bottom:8px">
+                                <button class="btn btn-v btn-block btn-sm" onclick="SOS.delegateVotes()">Delegate Votes</button>
+                                <div style="margin-top:12px;font-size:10px;color:var(--text3)">Current delegate: <span id="current-delegate">None</span></div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">Active Proposals</span></div>
+                        <div class="sec-body" id="proposals-list" style="max-height:350px;overflow-y:auto">
+                            <div class="empty">No proposals yet — create one above</div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <!-- TAB: DEVKIT -->
+            <div class="tab-pane" id="tab-devkit">
+                <div class="pane-hdr">
+                    <div>
+                        <div class="pane-hdr-title">DEVKIT</div>
+                        <div class="pane-hdr-sub">JSONFlow IR • Workflow builder • SDK export</div>
+                    </div>
+                    <div class="pane-hdr-actions">
+                        <button class="btn btn-ghost btn-sm" onclick="SOS.dkLoadExample()">Load Example</button>
+                        <button class="btn btn-ghost btn-sm" onclick="SOS.dkExportSDK()">Export SDK</button>
+                        <button class="btn btn-ghost btn-sm" onclick="SOS.dkValidate()">Validate</button>
+                        <button class="btn btn-c btn-sm" onclick="SOS.dkRunWorkflow()">Run</button>
+                    </div>
+                </div>
+                <div class="pane-scroll">
+                    <div class="grid-2col">
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">JSONFlow IR Editor</span></div>
+                            <div class="sec-body">
+                                <textarea id="dk-ir" style="width:100%;height:200px;font-size:10px;font-family:var(--mono)" placeholder='{"workflow":"my-flow","steps":[{"id":"s1","type":"compute","gas":500}]}'></textarea>
+                                <div style="display:flex;gap:6px;margin-top:8px;flex-wrap:wrap">
+                                    <button class="btn btn-ghost btn-sm" onclick="SOS.dkLoadExample()">Example</button>
+                                    <button class="btn btn-ghost btn-sm" onclick="SOS.dkValidate()">Validate IR</button>
+                                    <button class="btn btn-c btn-sm" onclick="SOS.dkRunWorkflow()">Run Workflow</button>
+                                </div>
+                                <pre class="pre-out" id="dk-validate-out" style="margin-top:8px;min-height:40px">—</pre>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Natural Language → IR</span></div>
+                            <div class="sec-body">
+                                <textarea id="dk-nl" placeholder="Describe your workflow in plain English..." style="width:100%;height:80px;margin-bottom:8px"></textarea>
+                                <button class="btn btn-v btn-block btn-sm" onclick="SOS.dkNLtoIR()">Convert to JSONFlow IR</button>
+                                <pre class="pre-out" id="dk-nl-out" style="margin-top:8px;min-height:60px">—</pre>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="grid-2col">
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Code Generation</span></div>
+                            <div class="sec-body">
+                                <select id="dk-lang" style="width:100%;margin-bottom:8px">
+                                    <option value="js">JavaScript</option>
+                                    <option value="ts">TypeScript</option>
+                                    <option value="python">Python</option>
+                                    <option value="rust">Rust</option>
+                                </select>
+                                <button class="btn btn-c btn-block btn-sm" onclick="SOS.dkGenCode()">Generate Code</button>
+                                <div style="display:flex;gap:8px;margin-top:8px">
+                                    <button class="btn btn-ghost btn-sm" onclick="SOS.dkCopyCode()">Copy</button>
+                                    <button class="btn btn-ghost btn-sm" onclick="SOS.dkExportSDK()">Export SDK</button>
+                                </div>
+                                <pre class="pre-out" id="dk-code-out" style="margin-top:8px;min-height:80px;max-height:200px;overflow-y:auto">—</pre>
+                            </div>
+                        </div>
+                        <div class="section">
+                            <div class="sec-header"><span class="sec-title">Workflow Registry</span></div>
+                            <div class="sec-body">
+                                <input id="dk-publish-name" placeholder="Workflow name" style="width:100%;margin-bottom:8px">
+                                <input id="dk-publish-ver" placeholder="Version (e.g. 1.0.0)" style="width:100%;margin-bottom:8px">
+                                <div style="display:flex;gap:8px">
+                                    <button class="btn btn-v btn-sm btn-block" onclick="SOS.dkPublish()">Publish</button>
+                                    <button class="btn btn-ghost btn-sm btn-block" onclick="SOS.registryPublish()">Registry</button>
+                                </div>
+                                <div id="dk-registry" style="margin-top:8px;max-height:120px;overflow-y:auto">
+                                    <div class="empty">No published workflows</div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="section">
+                        <div class="sec-header"><span class="sec-title">Execution Output</span></div>
+                        <div class="sec-body">
+                            <pre class="pre-out" id="dk-run-out" style="min-height:80px">Ready to run workflows…</pre>
+                        </div>
+                    </div>
+                </div>
+            </div>
+            <div class="tab-pane" id="tab-desktop">
+                <div class="pane-hdr"><div><div class="pane-hdr-title">DESKTOP</div><div class="pane-hdr-sub">Windowed environment • Apps • Taskbar</div></div></div>
+                <div class="pane-scroll" style="position:relative">
+                    <div id="desktop-taskbar" style="display:flex;gap:4px;margin-bottom:12px;flex-wrap:wrap"></div>
+                    <div id="desktop-icons" style="display:grid;grid-template-columns:repeat(auto-fill,80px);gap:8px"></div>
+                    <div id="window-layer" style="position:absolute;inset:0;pointer-events:none">
                         <div style="pointer-events:all"></div>
                     </div>
                 </div>
