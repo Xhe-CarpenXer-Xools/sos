@@ -111,6 +111,7 @@ function renderWindow(win) {
         box-shadow: 0 8px 32px rgba(0,0,0,.5);
         z-index: ${++winZIndex};
         overflow: hidden;
+        pointer-events: all;
     `;
 
     el.innerHTML = `
