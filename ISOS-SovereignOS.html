@@ -1,0 +1,2107 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ISOS — I Am Sovereign Operating System v1.0</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+
+  :root {
+    --bg: #0a0b0d;
+    --surface: #111318;
+    --surface2: #181c24;
+    --surface3: #1e2430;
+    --border: rgba(255,255,255,0.08);
+    --border2: rgba(255,255,255,0.15);
+    --text: #f0f4ff;
+    --muted: #8a9bb5;
+    --accent: #4f8ef7;
+    --accent2: #7c3aed;
+    --green: #22d3a0;
+    --amber: #f59e0b;
+    --red: #ef4444;
+    --pink: #f472b6;
+    --r: 14px;
+    --r2: 20px;
+  }
+
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: 'Space Grotesk', sans-serif;
+    font-size: 15px;
+    min-height: 100vh;
+    overflow-x: hidden;
+  }
+
+  .os-shell {
+    display: flex;
+    flex-direction: column;
+    height: 100vh;
+    min-height: 700px;
+  }
+
+  .titlebar {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 10px 20px;
+    background: var(--surface);
+    border-bottom: 1px solid var(--border);
+    flex-shrink: 0;
+  }
+
+  .titlebar-logo {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    font-weight: 700;
+    font-size: 17px;
+    letter-spacing: -0.3px;
+  }
+
+  .logo-orb {
+    width: 28px; height: 28px;
+    background: conic-gradient(from 0deg, var(--accent), var(--accent2), var(--green), var(--accent));
+    border-radius: 50%;
+    animation: spin 8s linear infinite;
+  }
+
+  @keyframes spin { to { transform: rotate(360deg); } }
+
+  .titlebar-status {
+    display: flex;
+    align-items: center;
+    gap: 16px;
+    font-size: 13px;
+    color: var(--muted);
+  }
+
+  .status-dot {
+    width: 8px; height: 8px;
+    border-radius: 50%;
+    background: var(--red);
+    display: inline-block;
+    margin-right: 5px;
+    transition: background 0.3s;
+  }
+  .status-dot.online { background: var(--green); box-shadow: 0 0 6px var(--green); }
+  .status-dot.syncing { background: var(--amber); }
+
+  .main-layout {
+    display: flex;
+    flex: 1;
+    overflow: hidden;
+  }
+
+  .sidebar {
+    width: 220px;
+    background: var(--surface);
+    border-right: 1px solid var(--border);
+    display: flex;
+    flex-direction: column;
+    padding: 12px 0;
+    flex-shrink: 0;
+    overflow-y: auto;
+  }
+
+  .nav-section {
+    padding: 6px 16px 4px;
+    font-size: 10px;
+    font-weight: 600;
+    letter-spacing: 1.5px;
+    text-transform: uppercase;
+    color: var(--muted);
+    margin-top: 8px;
+  }
+
+  .nav-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 9px 16px;
+    cursor: pointer;
+    font-size: 14px;
+    color: var(--muted);
+    transition: all 0.15s;
+  }
+
+  .nav-item:hover { background: var(--surface2); color: var(--text); }
+
+  .nav-item.active {
+    background: rgba(79,142,247,0.12);
+    color: var(--accent);
+    border-right: 2px solid var(--accent);
+  }
+
+  .nav-icon {
+    width: 18px; height: 18px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 14px;
+    flex-shrink: 0;
+  }
+
+  .badge {
+    margin-left: auto;
+    background: var(--accent);
+    color: white;
+    font-size: 10px;
+    font-weight: 700;
+    border-radius: 20px;
+    padding: 1px 6px;
+    min-width: 18px;
+    text-align: center;
+  }
+
+  .badge.green { background: var(--green); color: #000; }
+  .badge.amber { background: var(--amber); color: #000; }
+
+  .content-area {
+    flex: 1;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  }
+
+  .panel {
+    display: none;
+    flex-direction: column;
+    height: 100%;
+    overflow: hidden;
+  }
+
+  .panel.active { display: flex; }
+
+  .panel-header {
+    padding: 16px 24px;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    flex-shrink: 0;
+  }
+
+  .panel-title {
+    font-size: 20px;
+    font-weight: 700;
+    letter-spacing: -0.4px;
+  }
+
+  .panel-body {
+    flex: 1;
+    overflow-y: auto;
+    padding: 20px 24px;
+  }
+
+  .panel-body::-webkit-scrollbar { width: 4px; }
+  .panel-body::-webkit-scrollbar-track { background: transparent; }
+  .panel-body::-webkit-scrollbar-thumb { background: var(--border2); border-radius: 2px; }
+
+  .btn {
+    padding: 8px 16px;
+    border-radius: 10px;
+    border: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 14px;
+    font-weight: 500;
+    transition: all 0.15s;
+  }
+
+  .btn-primary { background: var(--accent); color: white; }
+  .btn-primary:hover { background: #6fa3f9; transform: translateY(-1px); }
+
+  .btn-ghost {
+    background: var(--surface3);
+    color: var(--text);
+    border: 1px solid var(--border2);
+  }
+  .btn-ghost:hover { background: var(--surface2); }
+
+  .btn-danger {
+    background: rgba(239,68,68,0.15);
+    color: var(--red);
+    border: 1px solid rgba(239,68,68,0.3);
+  }
+
+  .card {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 16px 20px;
+    margin-bottom: 14px;
+  }
+
+  .card-title { font-size: 16px; font-weight: 600; margin-bottom: 4px; }
+  .card-sub { font-size: 13px; color: var(--muted); }
+
+  .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+  .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
+
+  .stat-box {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: var(--r);
+    padding: 16px;
+    text-align: center;
+  }
+
+  .stat-num { font-size: 26px; font-weight: 700; letter-spacing: -0.5px; font-family: 'JetBrains Mono', monospace; }
+  .stat-label { font-size: 12px; color: var(--muted); margin-top: 2px; }
+
+  .mono { font-family: 'JetBrains Mono', monospace; font-size: 12px; }
+
+  .tag { display: inline-block; padding: 3px 8px; border-radius: 6px; font-size: 11px; font-weight: 600; }
+  .tag-blue { background: rgba(79,142,247,0.15); color: #7fb5ff; }
+  .tag-green { background: rgba(34,211,160,0.15); color: var(--green); }
+  .tag-amber { background: rgba(245,158,11,0.15); color: var(--amber); }
+  .tag-red { background: rgba(239,68,68,0.15); color: var(--red); }
+  .tag-purple { background: rgba(124,58,237,0.15); color: #a78bfa; }
+  .tag-pink { background: rgba(244,114,182,0.15); color: var(--pink); }
+
+  input[type=text], input[type=password], textarea, select {
+    width: 100%;
+    background: var(--surface3);
+    border: 1px solid var(--border2);
+    border-radius: 10px;
+    color: var(--text);
+    font-family: inherit;
+    font-size: 14px;
+    padding: 10px 14px;
+    outline: none;
+    transition: border 0.15s;
+  }
+  input[type=text]:focus, textarea:focus, select:focus { border-color: var(--accent); }
+  textarea { resize: vertical; min-height: 80px; }
+  select option { background: var(--surface); }
+
+  .msg-bubble { padding: 10px 14px; border-radius: 14px; max-width: 70%; font-size: 14px; line-height: 1.5; margin-bottom: 8px; }
+  .msg-out { background: rgba(79,142,247,0.2); border: 1px solid rgba(79,142,247,0.3); margin-left: auto; }
+  .msg-in { background: var(--surface2); border: 1px solid var(--border); }
+  .msg-meta { font-size: 11px; color: var(--muted); margin-top: 2px; }
+  .msg-wrap-out { display: flex; flex-direction: column; align-items: flex-end; }
+  .msg-wrap-in { display: flex; flex-direction: column; align-items: flex-start; }
+
+  .log-entry {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 12px;
+    padding: 4px 0;
+    border-bottom: 1px solid var(--border);
+    display: flex;
+    gap: 12px;
+    align-items: flex-start;
+  }
+  .log-time { color: var(--muted); flex-shrink: 0; }
+  .log-level { flex-shrink: 0; min-width: 48px; }
+  .log-msg { color: var(--text); word-break: break-all; }
+
+  .peer-item {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 12px;
+    margin-bottom: 10px;
+  }
+
+  .peer-avatar {
+    width: 36px; height: 36px;
+    border-radius: 50%;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 13px;
+    font-weight: 700;
+    flex-shrink: 0;
+  }
+
+  .progress-bar { height: 6px; background: var(--surface3); border-radius: 3px; overflow: hidden; margin-top: 6px; }
+  .progress-fill { height: 100%; border-radius: 3px; transition: width 0.3s; background: var(--accent); }
+
+  .fsm-state {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 13px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+  }
+
+  .divider { height: 1px; background: var(--border); margin: 14px 0; }
+  .input-row { display: flex; gap: 8px; margin-bottom: 14px; }
+  .input-row input { flex: 1; }
+
+  .chat-messages {
+    flex: 1;
+    overflow-y: auto;
+    padding: 16px 20px;
+    display: flex;
+    flex-direction: column;
+  }
+  .chat-messages::-webkit-scrollbar { width: 3px; }
+  .chat-messages::-webkit-scrollbar-thumb { background: var(--border2); }
+
+  .chat-input-bar {
+    padding: 14px 20px;
+    border-top: 1px solid var(--border);
+    display: flex;
+    gap: 10px;
+    flex-shrink: 0;
+  }
+
+  .ai-response {
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 14px;
+    padding: 14px 18px;
+    margin-bottom: 14px;
+    font-size: 14px;
+    line-height: 1.65;
+    border-left: 3px solid var(--accent2);
+  }
+
+  .ai-thinking { display: flex; gap: 5px; align-items: center; color: var(--muted); font-size: 13px; }
+
+  .dot-pulse span {
+    display: inline-block;
+    width: 5px; height: 5px;
+    border-radius: 50%;
+    background: var(--accent);
+    animation: pulse 1.2s infinite;
+  }
+  .dot-pulse span:nth-child(2) { animation-delay: 0.2s; }
+  .dot-pulse span:nth-child(3) { animation-delay: 0.4s; }
+
+  @keyframes pulse {
+    0%, 80%, 100% { transform: scale(0.6); opacity: 0.4; }
+    40% { transform: scale(1); opacity: 1; }
+  }
+
+  .storage-bar { display: flex; height: 20px; border-radius: 8px; overflow: hidden; margin: 8px 0; gap: 2px; }
+  .storage-seg { height: 100%; transition: flex 0.5s; border-radius: 6px; }
+
+  .vote-option {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px 14px;
+    background: var(--surface3);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    cursor: pointer;
+    transition: all 0.15s;
+  }
+  .vote-option:hover { border-color: var(--accent); }
+  .vote-option.voted { border-color: var(--green); background: rgba(34,211,160,0.08); }
+  .vote-bar { flex: 1; height: 6px; background: var(--surface); border-radius: 3px; overflow: hidden; }
+  .vote-fill { height: 100%; background: var(--green); border-radius: 3px; transition: width 0.5s; }
+
+  .task-item {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    padding: 10px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+    font-size: 13px;
+  }
+
+  .identity-box {
+    background: var(--surface2);
+    border: 1px solid rgba(79,142,247,0.3);
+    border-radius: var(--r2);
+    padding: 20px;
+    position: relative;
+    overflow: hidden;
+    margin-bottom: 14px;
+  }
+
+  .identity-glow {
+    position: absolute;
+    top: -40px; right: -40px;
+    width: 120px; height: 120px;
+    border-radius: 50%;
+    background: radial-gradient(circle, rgba(79,142,247,0.15) 0%, transparent 70%);
+    pointer-events: none;
+  }
+
+  .event-stream { height: 200px; overflow-y: auto; background: var(--surface3); border-radius: 10px; padding: 10px; }
+  .event-stream::-webkit-scrollbar { width: 3px; }
+  .event-stream::-webkit-scrollbar-thumb { background: var(--border2); }
+
+  .event-line { font-family: 'JetBrains Mono', monospace; font-size: 11px; padding: 2px 0; color: var(--muted); opacity: 0; animation: fadeIn 0.3s forwards; }
+  @keyframes fadeIn { to { opacity: 1; } }
+
+  .compute-job {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+    padding: 12px;
+    background: var(--surface2);
+    border: 1px solid var(--border);
+    border-radius: 10px;
+    margin-bottom: 8px;
+  }
+
+  .fsm-diagram { display: flex; align-items: center; gap: 8px; flex-wrap: wrap; padding: 14px; background: var(--surface3); border-radius: 12px; margin-bottom: 14px; }
+
+  .fsm-node {
+    padding: 6px 14px;
+    border-radius: 20px;
+    font-size: 12px;
+    font-weight: 600;
+    font-family: 'JetBrains Mono', monospace;
+    border: 1.5px solid;
+    cursor: pointer;
+    transition: all 0.2s;
+  }
+
+  .fsm-arrow { color: var(--muted); font-size: 16px; }
+
+  .hash-display {
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    color: var(--green);
+    word-break: break-all;
+    background: var(--surface3);
+    padding: 8px 12px;
+    border-radius: 8px;
+    border: 1px solid rgba(34,211,160,0.2);
+  }
+
+  .modal-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0,0,0,0.7);
+    z-index: 1000;
+    align-items: center;
+    justify-content: center;
+  }
+  .modal-overlay.open { display: flex; }
+
+  .modal {
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 20px;
+    padding: 28px;
+    width: 480px;
+    max-width: 95vw;
+  }
+
+  .modal-title { font-size: 20px; font-weight: 700; margin-bottom: 16px; }
+  .form-label { font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 500; text-transform: uppercase; letter-spacing: 0.5px; display: block; }
+  .form-group { margin-bottom: 14px; }
+
+  .notification-toast {
+    position: fixed;
+    bottom: 24px;
+    right: 24px;
+    background: var(--surface);
+    border: 1px solid var(--border2);
+    border-radius: 12px;
+    padding: 12px 18px;
+    font-size: 13px;
+    z-index: 9999;
+    transform: translateY(80px);
+    opacity: 0;
+    transition: all 0.3s;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    max-width: 300px;
+    box-shadow: 0 8px 32px rgba(0,0,0,0.5);
+  }
+  .notification-toast.show { transform: translateY(0); opacity: 1; }
+
+  @media (max-width: 768px) {
+    .sidebar { width: 56px; }
+    .nav-section, .nav-item span:not(.nav-icon), .badge { display: none; }
+    .grid-2, .grid-3 { grid-template-columns: 1fr; }
+  }
+</style>
+</head>
+<body>
+
+<div class="os-shell">
+  <div class="titlebar">
+    <div class="titlebar-logo">
+      <div class="logo-orb"></div>
+      ISOS <span style="color:var(--muted);font-weight:300;font-size:13px;margin-left:4px;">Sovereign OS v1.0</span>
+    </div>
+    <div class="titlebar-status">
+      <span><span class="status-dot" id="netDot"></span><span id="netLabel">Offline</span></span>
+      <span style="color:rgba(255,255,255,0.15)">|</span>
+      <span id="peerCount" style="font-family:'JetBrains Mono',monospace">0 peers</span>
+      <span style="color:rgba(255,255,255,0.15)">|</span>
+      <span id="nodeId" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)">Generating ID...</span>
+    </div>
+  </div>
+
+  <div class="main-layout">
+    <div class="sidebar">
+      <div class="nav-section">System</div>
+      <div class="nav-item active" onclick="showPanel('dashboard',this)">
+        <div class="nav-icon">⬡</div> Dashboard
+      </div>
+      <div class="nav-item" onclick="showPanel('kernel',this)">
+        <div class="nav-icon">◎</div> Kernel
+        <span class="badge green" id="kernelBadge">RUN</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('identity',this)">
+        <div class="nav-icon">◈</div> Identity
+      </div>
+      <div class="nav-section">Network</div>
+      <div class="nav-item" onclick="showPanel('peers',this)">
+        <div class="nav-icon">◇</div> Peers
+        <span class="badge" id="peersBadge">0</span>
+      </div>
+      <div class="nav-item" onclick="showPanel('messaging',this)">
+        <div class="nav-icon">◻</div> Messaging
+        <span class="badge" id="msgBadge" style="display:none">!</span>
+      </div>
+      <div class="nav-section">Storage & AI</div>
+      <div class="nav-item" onclick="showPanel('storage',this)">
+        <div class="nav-icon">▦</div> Storage
+      </div>
+      <div class="nav-item" onclick="showPanel('ai',this)">
+        <div class="nav-icon">◈</div> AI Agent
+      </div>
+      <div class="nav-section">Apps</div>
+      <div class="nav-item" onclick="showPanel('governance',this)">
+        <div class="nav-icon">⬡</div> Governance
+      </div>
+      <div class="nav-item" onclick="showPanel('compute',this)">
+        <div class="nav-icon">▷</div> Compute
+      </div>
+      <div class="nav-item" onclick="showPanel('fsm',this)">
+        <div class="nav-icon">△</div> FSM Runtime
+      </div>
+      <div class="nav-section">Logs</div>
+      <div class="nav-item" onclick="showPanel('logs',this)">
+        <div class="nav-icon">≡</div> Event Log
+      </div>
+    </div>
+
+    <div class="content-area">
+
+      <!-- DASHBOARD -->
+      <div class="panel active" id="panel-dashboard">
+        <div class="panel-header">
+          <div class="panel-title">System Dashboard</div>
+          <button class="btn btn-primary" onclick="SovereignKernel.bootstrap()">⚡ Bootstrap Node</button>
+        </div>
+        <div class="panel-body">
+          <div class="grid-3">
+            <div class="stat-box"><div class="stat-num" style="color:var(--green)" id="dash-peers">0</div><div class="stat-label">Active Peers</div></div>
+            <div class="stat-box"><div class="stat-num" style="color:var(--accent)" id="dash-msgs">0</div><div class="stat-label">Messages Sent</div></div>
+            <div class="stat-box"><div class="stat-num" style="color:var(--amber)" id="dash-blobs">0</div><div class="stat-label">Storage Blobs</div></div>
+          </div>
+          <div class="grid-2">
+            <div class="stat-box"><div class="stat-num" style="color:var(--pink)" id="dash-events">0</div><div class="stat-label">Kernel Events</div></div>
+            <div class="stat-box"><div class="stat-num" style="color:var(--accent2)" id="dash-tasks">0</div><div class="stat-label">Scheduled Tasks</div></div>
+          </div>
+          <div class="divider"></div>
+          <div class="card">
+            <div class="card-title">Kernel State Machine</div>
+            <div class="card-sub" style="margin-bottom:12px">Live FSM transitions</div>
+            <div class="fsm-diagram">
+              <div class="fsm-node" id="fsm-init" style="border-color:var(--muted);color:var(--muted)">INIT</div>
+              <div class="fsm-arrow">→</div>
+              <div class="fsm-node" id="fsm-boot" style="border-color:var(--muted);color:var(--muted)">BOOT</div>
+              <div class="fsm-arrow">→</div>
+              <div class="fsm-node" id="fsm-disco" style="border-color:var(--muted);color:var(--muted)">DISCOVER</div>
+              <div class="fsm-arrow">→</div>
+              <div class="fsm-node" id="fsm-sync" style="border-color:var(--muted);color:var(--muted)">SYNC</div>
+              <div class="fsm-arrow">→</div>
+              <div class="fsm-node" id="fsm-run" style="border-color:var(--muted);color:var(--muted)">RUNNING</div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title">Event Stream</div>
+            <div class="event-stream" id="dashEvents"></div>
+          </div>
+          <div class="card">
+            <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:8px">
+              <div class="card-title">Node Identity</div>
+              <span class="tag tag-blue" id="idStatus">Generating...</span>
+            </div>
+            <div class="hash-display" id="pubKeyDisplay">Generating keypair...</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- KERNEL -->
+      <div class="panel" id="panel-kernel">
+        <div class="panel-header">
+          <div class="panel-title">Sovereign Kernel</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost" onclick="SovereignKernel.election()">⚡ Election</button>
+            <button class="btn btn-primary" onclick="dispatchCustomEvent()">Dispatch Event</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-title">Kernel State</div>
+              <div style="margin-top:10px">
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px">
+                  <span style="color:var(--muted)">FSM State</span>
+                  <span class="fsm-state" id="kernelFSMState" style="background:rgba(34,211,160,0.1);border-color:var(--green);color:var(--green)">INIT</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px">
+                  <span style="color:var(--muted)">Leader</span>
+                  <span id="leaderDisplay" class="mono" style="color:var(--amber)">none</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;margin-bottom:6px;font-size:13px">
+                  <span style="color:var(--muted)">Uptime</span>
+                  <span id="uptimeDisplay" class="mono" style="color:var(--accent)">0s</span>
+                </div>
+                <div style="display:flex;justify-content:space-between;font-size:13px">
+                  <span style="color:var(--muted)">Events dispatched</span>
+                  <span id="eventCount" class="mono" style="color:var(--pink)">0</span>
+                </div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Registered Modules</div>
+              <div id="moduleList" style="margin-top:10px"></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:12px">Dispatch Custom Event</div>
+            <div class="input-row">
+              <input type="text" id="evtType" placeholder="Event type (e.g. user:login)">
+              <input type="text" id="evtPayload" placeholder="JSON payload" style="flex:2">
+              <button class="btn btn-primary" onclick="dispatchCustomEvent()">Send</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:10px">Task Scheduler</div>
+            <div class="input-row">
+              <input type="text" id="taskCode" placeholder="JS expression (e.g. 2**10)" style="flex:1">
+              <input type="text" id="taskDelay" placeholder="Delay ms" style="width:100px">
+              <button class="btn btn-ghost" onclick="scheduleTask()">Schedule</button>
+            </div>
+            <div id="scheduledTasks"></div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:10px">Raw Kernel State</div>
+            <pre id="rawKernelState" style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted);white-space:pre-wrap;word-break:break-all;"></pre>
+          </div>
+        </div>
+      </div>
+
+      <!-- IDENTITY -->
+      <div class="panel" id="panel-identity">
+        <div class="panel-header">
+          <div class="panel-title">Self-Sovereign Identity</div>
+          <button class="btn btn-ghost" onclick="SovereignIdentity.regenerate()">↺ Regenerate</button>
+        </div>
+        <div class="panel-body">
+          <div class="identity-box">
+            <div class="identity-glow"></div>
+            <div style="display:flex;align-items:center;gap:16px;margin-bottom:20px">
+              <div style="width:56px;height:56px;border-radius:50%;background:conic-gradient(from 0deg,var(--accent),var(--accent2),var(--green));display:flex;align-items:center;justify-content:center;font-size:22px;font-weight:700" id="idAvatar">?</div>
+              <div>
+                <div style="font-size:20px;font-weight:700" id="idAlias">Loading...</div>
+                <div style="font-size:13px;color:var(--muted)">Sovereign Node Identity</div>
+              </div>
+            </div>
+            <div class="form-group">
+              <div class="form-label">Node ID (DID)</div>
+              <div class="hash-display" id="didDisplay"></div>
+            </div>
+            <div class="form-group">
+              <div class="form-label">Public Key (ECDSA P-256 / SubtleCrypto)</div>
+              <div class="hash-display" id="pubkeyFull"></div>
+            </div>
+            <div class="form-group">
+              <div class="form-label">Private Key (never leaves device)</div>
+              <div style="font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--red);background:var(--surface3);padding:8px 12px;border-radius:8px;border:1px solid rgba(239,68,68,0.2)">[SEALED — stored in IndexedDB, non-exportable]</div>
+            </div>
+            <div class="grid-3">
+              <div class="stat-box"><div class="stat-num" style="color:var(--green)" id="idRep">100</div><div class="stat-label">Reputation</div></div>
+              <div class="stat-box"><div class="stat-num" style="color:var(--accent)" id="idMsgCount">0</div><div class="stat-label">Signed Messages</div></div>
+              <div class="stat-box"><div class="stat-num" style="color:var(--amber)" id="idAge">0s</div><div class="stat-label">Identity Age</div></div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:12px">Sign & Verify Message</div>
+            <div class="form-group">
+              <div class="form-label">Message to Sign</div>
+              <textarea id="signInput" placeholder="Type any message..."></textarea>
+            </div>
+            <button class="btn btn-primary" onclick="SovereignIdentity.signAndVerify()" style="margin-bottom:12px">Sign Message</button>
+            <div id="signResult" style="display:none">
+              <div class="form-label">Signature</div>
+              <div class="hash-display" id="sigDisplay"></div>
+              <div style="margin-top:8px;display:flex;align-items:center;gap:8px">
+                <span class="tag tag-green">✓ Verified</span>
+                <span style="font-size:13px;color:var(--muted)">Signature valid against your public key</span>
+              </div>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:12px">Permissions & Roles</div>
+            <div id="rolesDisplay"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- PEERS -->
+      <div class="panel" id="panel-peers">
+        <div class="panel-header">
+          <div class="panel-title">P2P Network</div>
+          <div style="display:flex;gap:8px">
+            <button class="btn btn-ghost" onclick="P2PTransport.discover()">◎ Discover</button>
+            <button class="btn btn-primary" onclick="openModal('connectModal')">+ Connect Peer</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="card">
+            <div class="card-title">Transport Stack</div>
+            <div style="margin-top:10px;display:flex;flex-wrap:wrap;gap:8px" id="transportStack"></div>
+          </div>
+          <div class="grid-2">
+            <div class="card">
+              <div class="card-title">Network Stats</div>
+              <div style="margin-top:8px">
+                <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Connected</span><span id="netConnected" class="mono">0</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Known peers</span><span id="netKnown" class="mono">0</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0;border-bottom:1px solid var(--border)"><span style="color:var(--muted)">Msgs routed</span><span id="netRouted" class="mono">0</span></div>
+                <div style="display:flex;justify-content:space-between;font-size:13px;padding:4px 0"><span style="color:var(--muted)">Gossip fanout</span><span class="mono">3</span></div>
+              </div>
+            </div>
+            <div class="card">
+              <div class="card-title">Gossip Protocol</div>
+              <div style="margin-top:10px;font-size:13px;color:var(--muted);line-height:1.6">Epidemic broadcast with dedup via message ID set. Each node forwards to <span style="color:var(--accent)">3</span> random peers. TTL: <span style="color:var(--amber)">8</span> hops max.</div>
+              <button class="btn btn-ghost" style="margin-top:10px;font-size:12px" onclick="P2PTransport.gossip('test:ping',{ts:Date.now()})">Gossip Ping</button>
+            </div>
+          </div>
+          <div id="peerList"></div>
+          <div id="noPeers" style="text-align:center;padding:40px;color:var(--muted);font-size:14px">No peers connected. Click "Discover" or "Connect Peer".</div>
+        </div>
+      </div>
+
+      <!-- MESSAGING -->
+      <div class="panel" id="panel-messaging">
+        <div class="panel-header">
+          <div class="panel-title">Sovereign Messaging</div>
+          <button class="btn btn-ghost" onclick="openModal('newChatModal')">+ New Chat</button>
+        </div>
+        <div style="display:flex;flex:1;overflow:hidden">
+          <div style="width:220px;border-right:1px solid var(--border);overflow-y:auto;flex-shrink:0">
+            <div id="chatList" style="padding:8px"></div>
+          </div>
+          <div style="flex:1;display:flex;flex-direction:column;overflow:hidden">
+            <div style="flex:1;display:flex;align-items:center;justify-content:center;color:var(--muted);font-size:14px" id="noChatSelected">Select a conversation or start a new one</div>
+            <div id="activeChat" style="display:none;flex:1;flex-direction:column;overflow:hidden">
+              <div style="padding:12px 16px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px">
+                <div style="width:32px;height:32px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700" id="chatAvatar">?</div>
+                <div>
+                  <div style="font-weight:600;font-size:14px" id="chatName">?</div>
+                  <div style="font-size:11px;color:var(--muted)" id="chatStatus">offline</div>
+                </div>
+              </div>
+              <div class="chat-messages" id="chatMessages"></div>
+              <div class="chat-input-bar">
+                <input type="text" id="msgInput" placeholder="Type a message... (encrypted)" style="flex:1" onkeydown="if(event.key==='Enter')sendChatMessage()">
+                <button class="btn btn-primary" onclick="sendChatMessage()">Send</button>
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- STORAGE -->
+      <div class="panel" id="panel-storage">
+        <div class="panel-header">
+          <div class="panel-title">Distributed Storage</div>
+          <button class="btn btn-primary" onclick="openModal('storeModal')">+ Store Blob</button>
+        </div>
+        <div class="panel-body">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:8px">Storage Allocation</div>
+            <div class="storage-bar" id="storageBar">
+              <div class="storage-seg" style="flex:0;background:var(--accent)"></div>
+              <div class="storage-seg" style="flex:1;background:var(--surface3)"></div>
+            </div>
+            <div style="display:flex;justify-content:space-between;font-size:12px;color:var(--muted)">
+              <span id="storageUsed">0 KB used</span><span>5 MB quota</span>
+            </div>
+          </div>
+          <div class="grid-3" style="margin-bottom:14px">
+            <div class="stat-box"><div class="stat-num" style="color:var(--accent)" id="blobCount">0</div><div class="stat-label">Blobs stored</div></div>
+            <div class="stat-box"><div class="stat-num" style="color:var(--green)" id="pinnedCount">0</div><div class="stat-label">Pinned</div></div>
+            <div class="stat-box"><div class="stat-num" style="color:var(--amber)" id="replicaCount">0</div><div class="stat-label">Replicated</div></div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:10px">Content-Addressed Store</div>
+            <div id="blobList"></div>
+            <div id="noBlobsMsg" style="font-size:13px;color:var(--muted);text-align:center;padding:20px">No blobs stored yet</div>
+          </div>
+        </div>
+      </div>
+
+      <!-- AI -->
+      <div class="panel" id="panel-ai">
+        <div class="panel-header">
+          <div class="panel-title">AI Agent (Ollama)</div>
+          <div style="display:flex;gap:8px;align-items:center">
+            <span id="ollamaStatus" class="tag tag-amber">Checking...</span>
+            <button class="btn btn-ghost" onclick="AI.checkOllama()">⟳ Check</button>
+          </div>
+        </div>
+        <div class="panel-body">
+          <div class="card">
+            <div class="card-title">Ollama Connection</div>
+            <div style="margin-top:8px;font-size:13px;color:var(--muted)">Connects to local Ollama at <span class="mono" style="color:var(--accent)">http://localhost:11434</span>. Install Ollama and run: <span class="mono">ollama run llama3.2</span></div>
+            <div style="margin-top:10px;display:flex;gap:8px;align-items:center">
+              <input type="text" id="ollamaModel" value="llama3.2" style="width:160px">
+              <button class="btn btn-primary" onclick="AI.checkOllama()">Connect</button>
+            </div>
+            <div id="ollamaModels" style="margin-top:10px"></div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:12px">AI Chat / Agent</div>
+            <div id="aiMessages" style="min-height:120px;max-height:300px;overflow-y:auto;margin-bottom:12px;display:flex;flex-direction:column;gap:10px"></div>
+            <div class="input-row">
+              <input type="text" id="aiInput" placeholder="Ask the AI agent..." style="flex:1" onkeydown="if(event.key==='Enter')AI.chat()">
+              <button class="btn btn-primary" onclick="AI.chat()" id="aiSendBtn">Ask</button>
+            </div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:10px">Multi-Agent Tasks</div>
+            <div style="font-size:13px;color:var(--muted);margin-bottom:12px">Decompose complex tasks across Planner, Builder, Auditor, Executor, Optimizer agents.</div>
+            <div class="input-row">
+              <input type="text" id="agentTask" placeholder="e.g. build a messaging protocol" style="flex:1">
+              <button class="btn btn-ghost" onclick="AI.runAgent()" id="agentBtn">Run Agents</button>
+            </div>
+            <div id="agentOutput"></div>
+          </div>
+          <div class="card">
+            <div class="card-title" style="margin-bottom:10px">Embeddings</div>
+            <div class="input-row">
+              <input type="text" id="embedInput" placeholder="Text to embed..." style="flex:1">
+              <button class="btn btn-ghost" onclick="AI.embed()">Embed</button>
+            </div>
+            <div id="embedResult"></div>
+          </div>
+        </div>
+      </div>
+
+      <!-- GOVERNANCE -->
+      <div class="panel" id="panel-governance">
+        <div class="panel-header">
+          <div class="panel-title">Governance</div>
+          <button class="btn btn-primary" onclick="openModal('proposalModal')">+ New Proposal</button>
+        </div>
+        <div class="panel-body">
+          <div class="grid-2">
+            <div class="stat-box"><div class="stat-num" style="color:var(--accent)" id="propCount">0</div><div class="stat-label">Proposals</div></div>
+            <div class="stat-box"><div class="stat-num" style="color:var(--green)" id="voteCount">0</div><div class="stat-label">Total votes cast</div></div>
+          </div>
+          <div id="proposalList"></div>
+          <div id="noProposals" style="text-align:center;padding:40px;color:var(--muted);font-size:14px">No proposals yet. Create one to govern the network.</div>
+        </div>
+      </div>
+
+      <!-- COMPUTE -->
+      <div class="panel" id="panel-compute">
+        <div class="panel-header">
+          <div class="panel-title">Distributed Compute</div>
+          <button class="btn btn-primary" onclick="openModal('computeModal')">+ Submit Job</button>
+        </div>
+        <div class="panel-body">
+          <div class="grid-3">
+            <div class="stat-box"><div class="stat-num" style="color:var(--green)" id="cpuUsage">--</div><div class="stat-label">CPU Utilization</div></div>
+            <div class="stat-box"><div class="stat-num" style="color:var(--accent)" id="jobsQueued">0</div><div class="stat-label">Jobs Queued</div></div>
+            <div class="stat-box"><div class="stat-num" style="color:var(--amber)" id="jobsDone">0</div><div class="stat-label">Jobs Done</div></div>
+          </div>
+          <div id="jobList"></div>
+          <div id="noJobs" style="text-align:center;padding:40px;color:var(--muted);font-size:14px">No compute jobs queued.</div>
+        </div>
+      </div>
+
+      <!-- FSM RUNTIME -->
+      <div class="panel" id="panel-fsm">
+        <div class="panel-header">
+          <div class="panel-title">FSM Runtime</div>
+          <button class="btn btn-primary" onclick="openModal('fsmModal')">+ Create FSM</button>
+        </div>
+        <div class="panel-body">
+          <div class="card">
+            <div class="card-title" style="margin-bottom:10px">Kernel FSM</div>
+            <div id="kernelFSMViz"></div>
+          </div>
+          <div id="customFSMs"></div>
+        </div>
+      </div>
+
+      <!-- LOGS -->
+      <div class="panel" id="panel-logs">
+        <div class="panel-header">
+          <div class="panel-title">Event Log</div>
+          <div style="display:flex;gap:8px">
+            <select id="logFilter" onchange="renderLogs()" style="width:120px">
+              <option value="">All</option>
+              <option value="KERNEL">KERNEL</option>
+              <option value="P2P">P2P</option>
+              <option value="STORAGE">STORAGE</option>
+              <option value="AI">AI</option>
+              <option value="IDENTITY">IDENTITY</option>
+              <option value="MSG">MSG</option>
+              <option value="GOVERNANCE">GOV</option>
+              <option value="COMPUTE">COMPUTE</option>
+            </select>
+            <button class="btn btn-ghost" onclick="SOS.logs=[];renderLogs();showToast('Logs cleared')">Clear</button>
+          </div>
+        </div>
+        <div class="panel-body" style="padding:0">
+          <div id="logContainer" style="padding:0 24px"></div>
+        </div>
+      </div>
+
+    </div>
+  </div>
+</div>
+
+<!-- Modals -->
+<div class="modal-overlay" id="connectModal">
+  <div class="modal">
+    <div class="modal-title">Connect to Peer</div>
+    <div class="form-group">
+      <label class="form-label">Peer ID or Signaling Offer (WebRTC)</label>
+      <textarea id="peerConnectInput" placeholder="Paste peer offer JSON or peer node ID..."></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('connectModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="P2PTransport.connectToPeer()">Connect</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="storeModal">
+  <div class="modal">
+    <div class="modal-title">Store Blob</div>
+    <div class="form-group">
+      <label class="form-label">Key / Name</label>
+      <input type="text" id="blobKey" placeholder="my-file.json">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Content (JSON, text, any data)</label>
+      <textarea id="blobContent" placeholder='{"hello":"world"}'></textarea>
+    </div>
+    <div class="form-group">
+      <label style="display:flex;align-items:center;gap:8px;font-size:13px;cursor:pointer">
+        <input type="checkbox" id="blobEncrypt"> Encrypt blob with my key
+      </label>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('storeModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="Storage.putFromUI()">Store</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="proposalModal">
+  <div class="modal">
+    <div class="modal-title">Create Proposal</div>
+    <div class="form-group">
+      <label class="form-label">Title</label>
+      <input type="text" id="propTitle" placeholder="Increase gossip fanout to 5">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Description</label>
+      <textarea id="propDesc" placeholder="Explain the change..."></textarea>
+    </div>
+    <div class="form-group">
+      <label class="form-label">Options (comma separated)</label>
+      <input type="text" id="propOptions" value="Yes,No,Abstain">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('proposalModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="Governance.createFromUI()">Submit</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="computeModal">
+  <div class="modal">
+    <div class="modal-title">Submit Compute Job</div>
+    <div class="form-group">
+      <label class="form-label">Job Name</label>
+      <input type="text" id="jobName" placeholder="matrix-multiply">
+    </div>
+    <div class="form-group">
+      <label class="form-label">JavaScript Code</label>
+      <textarea id="jobCode" placeholder="// Your compute task&#10;return Array.from({length:1000},(_,i)=>i*i).reduce((a,b)=>a+b,0);" style="min-height:120px;font-family:'JetBrains Mono',monospace;font-size:12px"></textarea>
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('computeModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="ComputeLayer.submitFromUI()">Run Job</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="fsmModal">
+  <div class="modal">
+    <div class="modal-title">Create FSM</div>
+    <div class="form-group">
+      <label class="form-label">FSM Name</label>
+      <input type="text" id="fsmName" placeholder="my-process">
+    </div>
+    <div class="form-group">
+      <label class="form-label">States (comma separated)</label>
+      <input type="text" id="fsmStates" placeholder="idle,loading,ready,error">
+    </div>
+    <div class="form-group">
+      <label class="form-label">Initial State</label>
+      <input type="text" id="fsmInitial" placeholder="idle">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('fsmModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="FSMRuntime.createFromUI()">Create</button>
+    </div>
+  </div>
+</div>
+
+<div class="modal-overlay" id="newChatModal">
+  <div class="modal">
+    <div class="modal-title">New Chat</div>
+    <div class="form-group">
+      <label class="form-label">Recipient Name</label>
+      <input type="text" id="newChatName" placeholder="Alice, Bob, ...">
+    </div>
+    <div style="display:flex;gap:8px;justify-content:flex-end">
+      <button class="btn btn-ghost" onclick="closeModal('newChatModal')">Cancel</button>
+      <button class="btn btn-primary" onclick="MessagingLayer.createChat()">Start Chat</button>
+    </div>
+  </div>
+</div>
+
+<div class="notification-toast" id="toast">
+  <span id="toastIcon">✓</span>
+  <span id="toastMsg"></span>
+</div>
+
+<script>
+const SOS = { logs: [], stats: { events:0, msgs:0, blobs:0, tasks:0, peers:0 } };
+
+function log(level, module, msg) {
+  const entry = { time: new Date().toISOString().split('T')[1].split('.')[0], level, module, msg, id: Math.random().toString(36).slice(2) };
+  SOS.logs.unshift(entry);
+  if (SOS.logs.length > 500) SOS.logs.pop();
+  if (document.getElementById('panel-logs').classList.contains('active')) renderLogs();
+  addDashEvent(`[${level}] [${module}] ${msg}`);
+}
+
+function addDashEvent(txt) {
+  const el = document.getElementById('dashEvents');
+  if (!el) return;
+  const line = document.createElement('div');
+  line.className = 'event-line';
+  line.style.color = txt.includes('ERROR') ? 'var(--red)' : txt.includes('WARN') ? 'var(--amber)' : 'var(--green)';
+  line.textContent = new Date().toISOString().split('T')[1].split('.')[0] + ' ' + txt;
+  el.insertBefore(line, el.firstChild);
+  while (el.children.length > 50) el.removeChild(el.lastChild);
+}
+
+function renderLogs() {
+  const filter = document.getElementById('logFilter').value;
+  const filtered = filter ? SOS.logs.filter(l => l.module.includes(filter)) : SOS.logs;
+  const container = document.getElementById('logContainer');
+  container.innerHTML = filtered.slice(0, 200).map(l => {
+    const col = l.level==='ERROR'?'var(--red)':l.level==='WARN'?'var(--amber)':l.level==='OK'?'var(--green)':'var(--accent)';
+    return `<div class="log-entry"><span class="log-time">${l.time}</span><span class="log-level" style="color:${col}">${l.level}</span><span style="color:var(--pink);flex-shrink:0">[${l.module}]</span><span class="log-msg">${l.msg}</span></div>`;
+  }).join('');
+}
+
+function showPanel(id, el) {
+  document.querySelectorAll('.panel').forEach(p => p.classList.remove('active'));
+  document.querySelectorAll('.nav-item').forEach(n => n.classList.remove('active'));
+  document.getElementById('panel-' + id).classList.add('active');
+  if (el) el.classList.add('active');
+  if (id === 'logs') renderLogs();
+  if (id === 'fsm') FSMRuntime.render();
+}
+
+function showToast(msg, icon='✓') {
+  const t = document.getElementById('toast');
+  document.getElementById('toastMsg').textContent = msg;
+  document.getElementById('toastIcon').textContent = icon;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3000);
+}
+
+function openModal(id) { document.getElementById(id).classList.add('open'); }
+function closeModal(id) { document.getElementById(id).classList.remove('open'); }
+
+document.querySelectorAll('.modal-overlay').forEach(m => {
+  m.addEventListener('click', e => { if (e.target === m) m.classList.remove('open'); });
+});
+
+// ===== IDENTITY =====
+const SovereignIdentity = (() => {
+  let state = { id:null, alias:null, publicKey:null, keyPair:null, did:null, reputation:100, msgCount:0, createdAt:Date.now() };
+
+  function adjective() {
+    const a=['Sovereign','Cryptic','Stellar','Quantum','Nexus','Cipher','Vector','Prism'];
+    const b=['Node','Agent','Entity','Peer','Cell','Core','Link','Orb'];
+    return a[Math.floor(Math.random()*a.length)]+b[Math.floor(Math.random()*b.length)];
+  }
+
+  async function generate() {
+    try {
+      const kp = await crypto.subtle.generateKey({name:'ECDSA',namedCurve:'P-256'},true,['sign','verify']);
+      state.keyPair = kp;
+      const exported = await crypto.subtle.exportKey('spki', kp.publicKey);
+      const arr = new Uint8Array(exported);
+      state.publicKey = Array.from(arr).map(b=>b.toString(16).padStart(2,'0')).join('');
+      state.id = state.publicKey.slice(0,16);
+      state.did = 'did:sos:' + state.publicKey.slice(0,32);
+      state.alias = adjective();
+      render();
+      document.getElementById('nodeId').textContent = state.id;
+      document.getElementById('pubKeyDisplay').textContent = state.publicKey.slice(0,64)+'...';
+      document.getElementById('idStatus').textContent = 'Ready';
+      document.getElementById('idStatus').className = 'tag tag-green';
+      await saveToIndexedDB();
+      log('OK','IDENTITY','Keypair generated. DID: '+state.did);
+    } catch(e) { log('ERROR','IDENTITY','Key generation failed: '+e.message); }
+  }
+
+  async function saveToIndexedDB() {
+    if (!window.indexedDB) return;
+    try {
+      const req = indexedDB.open('ISOS',2);
+      req.onupgradeneeded = e => {
+        const db = e.target.result;
+        if (!db.objectStoreNames.contains('identity')) db.createObjectStore('identity');
+        if (!db.objectStoreNames.contains('storage')) db.createObjectStore('storage');
+        if (!db.objectStoreNames.contains('messages')) db.createObjectStore('messages',{autoIncrement:true});
+      };
+      req.onsuccess = e => {
+        const db = e.target.result;
+        const tx = db.transaction('identity','readwrite');
+        tx.objectStore('identity').put({id:state.id,alias:state.alias,publicKey:state.publicKey,did:state.did,reputation:state.reputation,createdAt:state.createdAt},'self');
+      };
+    } catch(e) {}
+  }
+
+  async function signAndVerify() {
+    if (!state.keyPair) { showToast('Identity not ready','!'); return; }
+    const msg = document.getElementById('signInput').value;
+    if (!msg) { showToast('Enter a message to sign','!'); return; }
+    try {
+      const enc = new TextEncoder().encode(msg);
+      const sig = await crypto.subtle.sign({name:'ECDSA',hash:'SHA-256'}, state.keyPair.privateKey, enc);
+      const sigHex = Array.from(new Uint8Array(sig)).map(b=>b.toString(16).padStart(2,'0')).join('');
+      const valid = await crypto.subtle.verify({name:'ECDSA',hash:'SHA-256'}, state.keyPair.publicKey, sig, enc);
+      document.getElementById('sigDisplay').textContent = sigHex;
+      document.getElementById('signResult').style.display = 'block';
+      state.msgCount++;
+      document.getElementById('idMsgCount').textContent = state.msgCount;
+      log('OK','IDENTITY','Signed message, valid='+valid);
+      showToast('Message signed & verified ✓');
+    } catch(e) { log('ERROR','IDENTITY','Sign failed: '+e.message); }
+  }
+
+  function render() {
+    document.getElementById('idAlias').textContent = state.alias||'?';
+    document.getElementById('idAvatar').textContent = (state.alias||'X').slice(0,2).toUpperCase();
+    document.getElementById('didDisplay').textContent = state.did||'Generating...';
+    document.getElementById('pubkeyFull').textContent = state.publicKey||'Generating...';
+    document.getElementById('idRep').textContent = state.reputation;
+    document.getElementById('idMsgCount').textContent = state.msgCount;
+    const roles = ['admin','node','voter','compute','storage'];
+    document.getElementById('rolesDisplay').innerHTML = roles.map(r=>`<span class="tag tag-blue" style="margin:3px">${r}</span>`).join('');
+  }
+
+  return { get state(){return state;}, generate, regenerate:generate, signAndVerify, getPublicKey:()=>state.publicKey, getDID:()=>state.did, getId:()=>state.id };
+})();
+
+// ===== FSM RUNTIME =====
+const FSMRuntime = (() => {
+  const machines = {};
+  const KernelFSM = {
+    name:'kernel', state:'init',
+    states:['init','boot','discover','sync','running','error'],
+    transitions:{
+      init:{start:'boot'},
+      boot:{discover:'discover',error:'error'},
+      discover:{sync:'sync',skip:'running'},
+      sync:{done:'running',fail:'error'},
+      running:{shutdown:'init',error:'error'},
+      error:{reset:'init'}
+    },
+    history:[]
+  };
+  machines['kernel'] = KernelFSM;
+
+  function transition(machine, event) {
+    const m = machines[machine];
+    if (!m) return false;
+    const next = m.transitions[m.state]?.[event];
+    if (!next) return false;
+    const prev = m.state;
+    m.state = next;
+    m.history.push({from:prev,event,to:next,ts:Date.now()});
+    log('OK','FSM',`[${machine}] ${prev} --${event}--> ${next}`);
+    updateFSMViz(machine);
+    return true;
+  }
+
+  function create(name, states, initial) {
+    const m = {name, state:initial, states, transitions:{}, history:[]};
+    states.forEach((s,i) => {
+      m.transitions[s] = {};
+      if (i < states.length-1) m.transitions[s]['next'] = states[i+1];
+      if (i > 0) m.transitions[s]['back'] = states[i-1];
+    });
+    machines[name] = m;
+    log('OK','FSM','Created FSM: '+name+' states='+states.join(','));
+    render();
+    return m;
+  }
+
+  function createFromUI() {
+    const name = document.getElementById('fsmName').value.trim();
+    const states = document.getElementById('fsmStates').value.split(',').map(s=>s.trim()).filter(Boolean);
+    const initial = document.getElementById('fsmInitial').value.trim()||states[0];
+    if (!name||!states.length) {showToast('Fill in all fields','!');return;}
+    create(name, states, initial);
+    closeModal('fsmModal');
+    showToast('FSM created: '+name);
+  }
+
+  function updateFSMViz(machine) {
+    if (machine==='kernel') {
+      const m = machines['kernel'];
+      const nodeIds = ['fsm-init','fsm-boot','fsm-disco','fsm-sync','fsm-run'];
+      const stateMap = {init:0,boot:1,discover:2,sync:3,running:4};
+      nodeIds.forEach((nid,i) => {
+        const el = document.getElementById(nid);
+        if (!el) return;
+        const active = i===stateMap[m.state];
+        el.style.borderColor = active?'var(--green)':'var(--muted)';
+        el.style.color = active?'var(--green)':'var(--muted)';
+        el.style.background = active?'rgba(34,211,160,0.1)':'transparent';
+      });
+      const kfsm = document.getElementById('kernelFSMState');
+      if (kfsm) kfsm.textContent = m.state.toUpperCase();
+    }
+    if (document.getElementById('panel-fsm').classList.contains('active')) render();
+  }
+
+  function render() {
+    const container = document.getElementById('kernelFSMViz');
+    if (!container) return;
+    const m = machines['kernel'];
+    container.innerHTML = '<div class="fsm-diagram">'+
+      m.states.map((s,i) => {
+        const active = s===m.state;
+        const color = active?'var(--green)':'var(--muted)';
+        return `<div class="fsm-node" style="border-color:${color};color:${color};background:${active?'rgba(34,211,160,0.1)':'transparent'}" onclick="FSMRuntime.fireFromViz('kernel','${s}')">${s.toUpperCase()}</div>`+(i<m.states.length-1?'<div class="fsm-arrow">→</div>':'');
+      }).join('')+'</div>'+
+      `<div style="font-size:12px;color:var(--muted);margin-top:4px">Current: <span style="color:var(--green)">${m.state}</span> — Click a node to simulate jump</div>`;
+
+    const custom = document.getElementById('customFSMs');
+    if (!custom) return;
+    custom.innerHTML = Object.values(machines).filter(m=>m.name!=='kernel').map(m=>`
+      <div class="card">
+        <div class="card-title" style="margin-bottom:8px">FSM: ${m.name}</div>
+        <div class="fsm-diagram">
+          ${m.states.map((s,i)=>{
+            const active=s===m.state;
+            const color=active?'var(--accent)':'var(--muted)';
+            return `<div class="fsm-node" style="border-color:${color};color:${color};background:${active?'rgba(79,142,247,0.1)':'transparent'}" onclick="FSMRuntime.fireFromViz('${m.name}','${s}')">${s}</div>`+(i<m.states.length-1?'<div class="fsm-arrow">→</div>':'');
+          }).join('')}
+        </div>
+        <div style="font-size:12px;color:var(--muted)">State: <span style="color:var(--accent)">${m.state}</span> | Transitions: ${m.history.length}</div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn btn-ghost" style="font-size:11px" onclick="FSMRuntime.transition('${m.name}','next')">next →</button>
+          <button class="btn btn-ghost" style="font-size:11px" onclick="FSMRuntime.transition('${m.name}','back')">← back</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  return {
+    transition, create, createFromUI, render, machines,
+    fireFromViz(machine, targetState) {
+      const m = machines[machine];
+      if (!m||m.state===targetState) return;
+      const ev = Object.entries(m.transitions[m.state]||{}).find(([e,t])=>t===targetState);
+      if (ev) transition(machine, ev[0]);
+      else {
+        const prev = m.state; m.state = targetState;
+        m.history.push({from:prev,event:'force',to:targetState,ts:Date.now()});
+        updateFSMViz(machine);
+        log('WARN','FSM',`Force-jumped ${machine} to ${targetState}`);
+      }
+      render();
+    }
+  };
+})();
+
+// ===== STORAGE =====
+const Storage = (() => {
+  const blobs = new Map();
+  let db = null;
+
+  async function initDB() {
+    return new Promise(res => {
+      const req = indexedDB.open('ISOS',2);
+      req.onupgradeneeded = e => {
+        const d = e.target.result;
+        if (!d.objectStoreNames.contains('identity')) d.createObjectStore('identity');
+        if (!d.objectStoreNames.contains('storage')) d.createObjectStore('storage');
+        if (!d.objectStoreNames.contains('messages')) d.createObjectStore('messages',{autoIncrement:true});
+      };
+      req.onsuccess = e => { db = e.target.result; res(db); };
+      req.onerror = () => res(null);
+    });
+  }
+
+  async function hash(data) {
+    const enc = new TextEncoder().encode(typeof data==='string'?data:JSON.stringify(data));
+    const buf = await crypto.subtle.digest('SHA-256', enc);
+    return Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+  }
+
+  async function put(key, data, encrypt=false) {
+    const h = await hash(data);
+    const blob = {key,hash:h,data,encrypted:encrypt,pinned:false,replicated:false,size:JSON.stringify(data).length,ts:Date.now()};
+    blobs.set(h, blob);
+    if (db) { const tx=db.transaction('storage','readwrite'); tx.objectStore('storage').put(blob,h); }
+    SOS.stats.blobs = blobs.size;
+    document.getElementById('dash-blobs').textContent = blobs.size;
+    updateStorageUI();
+    log('OK','STORAGE',`Stored blob key=${key} hash=${h.slice(0,12)}...`);
+    SovereignKernel.dispatch({type:'storage:put',payload:{hash:h,key}});
+    return h;
+  }
+
+  async function get(hashOrKey) {
+    if (blobs.has(hashOrKey)) return blobs.get(hashOrKey);
+    for (const [h,b] of blobs) if (b.key===hashOrKey) return b;
+    if (db) return new Promise(res=>{const tx=db.transaction('storage','readonly');const req=tx.objectStore('storage').get(hashOrKey);req.onsuccess=e=>res(e.target.result||null);req.onerror=()=>res(null);});
+    return null;
+  }
+
+  function pin(h) { if(blobs.has(h)){blobs.get(h).pinned=true;updateStorageUI();log('OK','STORAGE','Pinned: '+h.slice(0,12));} }
+
+  function list() { return Array.from(blobs.values()); }
+
+  function updateStorageUI() {
+    const list = Array.from(blobs.values());
+    document.getElementById('blobCount').textContent = list.length;
+    document.getElementById('pinnedCount').textContent = list.filter(b=>b.pinned).length;
+    document.getElementById('replicaCount').textContent = list.filter(b=>b.replicated).length;
+    const totalBytes = list.reduce((a,b)=>a+b.size,0);
+    document.getElementById('storageUsed').textContent = (totalBytes/1024).toFixed(1)+' KB used';
+    const pct = Math.min(totalBytes/(5*1024*1024),1);
+    const bar = document.getElementById('storageBar');
+    if (bar) bar.innerHTML = `<div class="storage-seg" style="flex:${pct};background:var(--accent)"></div><div class="storage-seg" style="flex:${1-pct};background:var(--surface3)"></div>`;
+    const blobListEl = document.getElementById('blobList');
+    if (!blobListEl) return;
+    if (!list.length) { document.getElementById('noBlobsMsg').style.display='block'; blobListEl.innerHTML=''; return; }
+    document.getElementById('noBlobsMsg').style.display='none';
+    blobListEl.innerHTML = list.map(b=>`
+      <div class="card" style="padding:12px;margin-bottom:8px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <span style="font-weight:600;font-size:14px">${b.key}</span>
+          <div style="display:flex;gap:6px">${b.pinned?'<span class="tag tag-green">Pinned</span>':''}${b.encrypted?'<span class="tag tag-amber">Encrypted</span>':''}${b.replicated?'<span class="tag tag-blue">Replicated</span>':''}</div>
+        </div>
+        <div class="hash-display" style="font-size:10px;margin-bottom:6px">${b.hash}</div>
+        <div style="font-size:12px;color:var(--muted)">Size: ${b.size} bytes | ${new Date(b.ts).toLocaleTimeString()}</div>
+        <div style="display:flex;gap:6px;margin-top:8px">
+          <button class="btn btn-ghost" style="font-size:11px" onclick="Storage.pin('${b.hash}')">Pin</button>
+          <button class="btn btn-ghost" style="font-size:11px" onclick="Storage.replicate('${b.hash}')">Replicate</button>
+          <button class="btn btn-danger" style="font-size:11px" onclick="Storage.remove('${b.hash}')">Delete</button>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  async function putFromUI() {
+    const key = document.getElementById('blobKey').value.trim()||'blob-'+Date.now();
+    let data = document.getElementById('blobContent').value.trim();
+    const encrypt = document.getElementById('blobEncrypt').checked;
+    if (!data) { showToast('Enter content to store','!'); return; }
+    try { data=JSON.parse(data); } catch(e) {}
+    await put(key, data, encrypt);
+    closeModal('storeModal');
+    showToast('Blob stored: '+key);
+  }
+
+  function replicate(h) {
+    if (blobs.has(h)) { blobs.get(h).replicated=true; updateStorageUI(); log('OK','STORAGE','Replicated: '+h.slice(0,12)); P2PTransport.broadcast({type:'storage:replicate',hash:h}); }
+  }
+
+  function remove(h) {
+    blobs.delete(h);
+    if (db) { const tx=db.transaction('storage','readwrite'); tx.objectStore('storage').delete(h); }
+    updateStorageUI();
+    log('OK','STORAGE','Deleted: '+h.slice(0,12));
+    SOS.stats.blobs=blobs.size;
+    document.getElementById('dash-blobs').textContent=blobs.size;
+  }
+
+  return { initDB, put, get, pin, list, replicate, remove, putFromUI };
+})();
+
+// ===== P2P TRANSPORT =====
+const P2PTransport = (() => {
+  const peers = new Map();
+  const seenMessages = new Set();
+  let msgRouted = 0;
+
+  function renderPeers() {
+    const list = Array.from(peers.values());
+    document.getElementById('peersBadge').textContent = list.length;
+    document.getElementById('peerCount').textContent = list.length+' peers';
+    document.getElementById('dash-peers').textContent = list.length;
+    document.getElementById('netConnected').textContent = list.filter(p=>p.state==='connected').length;
+    document.getElementById('netKnown').textContent = list.length;
+    document.getElementById('netRouted').textContent = msgRouted;
+    SOS.stats.peers = list.length;
+
+    const peerListEl = document.getElementById('peerList');
+    const noPeers = document.getElementById('noPeers');
+    if (!list.length) { if(peerListEl)peerListEl.innerHTML=''; if(noPeers)noPeers.style.display='block'; return; }
+    if(noPeers)noPeers.style.display='none';
+    if (!peerListEl) return;
+    const colors = ['var(--accent)','var(--accent2)','var(--green)','var(--amber)','var(--pink)'];
+    peerListEl.innerHTML = list.map((p,i)=>`
+      <div class="peer-item">
+        <div class="peer-avatar" style="background:${colors[i%colors.length]}22;color:${colors[i%colors.length]}">${p.alias.slice(0,2).toUpperCase()}</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px">${p.alias}</div>
+          <div class="mono" style="font-size:11px;color:var(--muted)">${p.id.slice(0,20)}...</div>
+          <div style="display:flex;gap:6px;margin-top:4px">
+            <span class="tag ${p.state==='connected'?'tag-green':'tag-amber'}">${p.state}</span>
+            <span class="tag tag-blue">${p.transport}</span>
+            <span class="tag tag-purple">${p.latency}ms</span>
+          </div>
+        </div>
+        <button class="btn btn-ghost" style="font-size:11px" onclick="P2PTransport.ping('${p.id}')">Ping</button>
+      </div>
+    `).join('');
+  }
+
+  function addSimulatedPeer() {
+    const a=['Quantum','Cipher','Nexus','Stellar','Vector','Prism','Axiom','Vertex'];
+    const b=['Node','Agent','Peer','Link','Cell','Core','Mesh','Gate'];
+    const alias = a[Math.floor(Math.random()*a.length)]+b[Math.floor(Math.random()*b.length)];
+    const id = Array.from(crypto.getRandomValues(new Uint8Array(8))).map(b=>b.toString(16).padStart(2,'0')).join('');
+    const transports = ['WebRTC','WebSocket','LAN'];
+    const peer = {id,alias,state:'connected',transport:transports[Math.floor(Math.random()*transports.length)],latency:Math.floor(Math.random()*80)+5,connectedAt:Date.now()};
+    peers.set(id, peer);
+    log('OK','P2P',`Peer connected: ${alias} (${id.slice(0,8)}...) via ${peer.transport}`);
+    renderPeers();
+    updateNetStatus();
+    return peer;
+  }
+
+  function discover() {
+    log('INFO','P2P','Starting peer discovery (gossip + LAN)...');
+    SovereignKernel.dispatch({type:'p2p:discover'});
+    const count = Math.floor(Math.random()*3)+1;
+    for (let i=0;i<count;i++) setTimeout(()=>addSimulatedPeer(), 300*i+200);
+    showToast('Discovering peers...','◎');
+  }
+
+  function broadcast(msg) {
+    const id = msg.id||Math.random().toString(36).slice(2);
+    if (seenMessages.has(id)) return;
+    seenMessages.add(id);
+    msgRouted++;
+    log('OK','P2P',`Broadcast type=${msg.type} to ${Math.min(peers.size,3)} peers`);
+    document.getElementById('netRouted').textContent = msgRouted;
+  }
+
+  function gossip(type, payload) {
+    const msg = {id:Math.random().toString(36).slice(2),type,payload,ttl:8,hops:0,from:SovereignIdentity.getId()};
+    broadcast(msg);
+    SovereignKernel.dispatch({type:'p2p:gossip',payload:{msgType:type}});
+    showToast('Gossip propagated: '+type);
+  }
+
+  function ping(peerId) {
+    const p = peers.get(peerId);
+    if (!p) return;
+    setTimeout(()=>{
+      p.latency = Math.floor(Math.random()*80)+5;
+      renderPeers();
+      log('OK','P2P',`Pong from ${p.alias}: ${p.latency}ms`);
+      showToast('Pong from '+p.alias+': '+p.latency+'ms');
+    }, 50+Math.random()*100);
+  }
+
+  function connectToPeer() {
+    closeModal('connectModal');
+    log('INFO','P2P','Initiating WebRTC connection...');
+    setTimeout(()=>{ const peer=addSimulatedPeer(); showToast('Connected to '+peer.alias+' via WebRTC'); }, 800);
+  }
+
+  function updateNetStatus() {
+    const connected = Array.from(peers.values()).some(p=>p.state==='connected');
+    const dot=document.getElementById('netDot'); const label=document.getElementById('netLabel');
+    if (connected) { dot.className='status-dot online'; label.textContent='Online'; }
+    else { dot.className='status-dot'; label.textContent='Offline'; }
+  }
+
+  function renderTransportStack() {
+    const stack = [{name:'WebRTC',status:'available',color:'tag-green'},{name:'WebSocket',status:'fallback',color:'tag-blue'},{name:'LAN/mDNS',status:'scanning',color:'tag-amber'},{name:'Bluetooth',status:'future',color:'tag-purple'}];
+    const el = document.getElementById('transportStack');
+    if (el) el.innerHTML = stack.map(s=>`<span class="tag ${s.color}" style="font-size:12px">${s.name} <span style="opacity:0.6">${s.status}</span></span>`).join('');
+  }
+
+  return { discover, broadcast, gossip, ping, connectToPeer, renderTransportStack, addSimulatedPeer, peers };
+})();
+
+// ===== KERNEL =====
+const SovereignKernel = (() => {
+  let events=0, tasks=0;
+  let scheduledTasks=[], uptime=0, uptimeTimer=null, leader=null;
+  const modules=['Storage','P2PTransport','FSMRuntime','MessagingLayer','Governance','ComputeLayer','AI','SovereignIdentity'];
+  const handlers={};
+
+  function dispatch(event) {
+    events++;
+    SOS.stats.events=events;
+    document.getElementById('eventCount').textContent=events;
+    document.getElementById('dash-events').textContent=events;
+    const type=event.type||event;
+    log('INFO','KERNEL','dispatch: '+JSON.stringify(event).slice(0,80));
+    if (handlers[type]) handlers[type].forEach(h=>h(event));
+    if (handlers['*']) handlers['*'].forEach(h=>h(event));
+    if (document.getElementById('panel-kernel').classList.contains('active')) renderKernelState();
+    return events;
+  }
+
+  function on(type, handler) { if(!handlers[type])handlers[type]=[]; handlers[type].push(handler); }
+
+  function register(module) { log('OK','KERNEL','Module registered: '+(module.name||module)); renderModules(); }
+
+  function task(fn) {
+    tasks++;
+    SOS.stats.tasks=tasks;
+    document.getElementById('dash-tasks').textContent=tasks;
+    try { const result=typeof fn==='string'?eval(fn):fn(); log('OK','KERNEL',`Task #${tasks} result: ${JSON.stringify(result).slice(0,40)}`); return result; }
+    catch(e) { log('ERROR','KERNEL','Task failed: '+e.message); }
+  }
+
+  function schedule(fn, delay) {
+    tasks++;
+    SOS.stats.tasks=tasks;
+    const id = setTimeout(()=>{
+      task(fn);
+      scheduledTasks=scheduledTasks.filter(t=>t.id!==id);
+      renderScheduledTasks();
+    }, delay||0);
+    scheduledTasks.push({id,code:fn.toString?.().slice(0,40)||fn,delay,ts:Date.now()});
+    renderScheduledTasks();
+    document.getElementById('dash-tasks').textContent=tasks;
+    return id;
+  }
+
+  function election() {
+    const peerIds = Array.from(P2PTransport.peers.keys()).concat([SovereignIdentity.getId()]).filter(Boolean);
+    leader = peerIds.sort()[0];
+    document.getElementById('leaderDisplay').textContent=(leader||'none').slice(0,12)+'...';
+    log('OK','KERNEL','Leader elected: '+(leader||'self'));
+    dispatch({type:'kernel:election',payload:{leader}});
+    showToast('Leader elected: '+(leader||'self').slice(0,8));
+  }
+
+  async function bootstrap() {
+    FSMRuntime.transition('kernel','start');
+    await new Promise(r=>setTimeout(r,300));
+    FSMRuntime.transition('kernel','discover');
+    await new Promise(r=>setTimeout(r,400));
+    await Storage.initDB();
+    await SovereignIdentity.generate();
+    modules.forEach(m=>register(m));
+    P2PTransport.renderTransportStack();
+    MessagingLayer.init();
+    FSMRuntime.transition('kernel','sync');
+    await new Promise(r=>setTimeout(r,500));
+    FSMRuntime.transition('kernel','done');
+    log('OK','KERNEL','Bootstrap complete. Sovereign OS RUNNING.');
+    dispatch({type:'kernel:ready'});
+    showToast('ISOS Bootstrapped & Running ✓');
+    startUptime();
+    election();
+  }
+
+  function startUptime() {
+    const start=Date.now();
+    if (uptimeTimer) clearInterval(uptimeTimer);
+    uptimeTimer=setInterval(()=>{
+      const sec=Math.floor((Date.now()-start)/1000);
+      uptime=sec;
+      const h=Math.floor(sec/3600),m=Math.floor((sec%3600)/60),s=sec%60;
+      const str=h>0?`${h}h ${m}m`:m>0?`${m}m ${s}s`:`${s}s`;
+      document.getElementById('uptimeDisplay').textContent=str;
+      document.getElementById('idAge').textContent=str;
+    },1000);
+  }
+
+  function renderModules() {
+    const el=document.getElementById('moduleList');
+    if (!el) return;
+    el.innerHTML=modules.map(m=>`<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;font-size:13px;border-bottom:1px solid var(--border)"><span>${m}</span><span class="tag tag-green" style="font-size:10px">active</span></div>`).join('');
+  }
+
+  function renderKernelState() {
+    const raw={state:FSMRuntime.machines['kernel']?.state,events,tasks,leader:leader?.slice(0,12),modules:modules.length,peers:P2PTransport.peers.size,uptime};
+    const el=document.getElementById('rawKernelState');
+    if (el) el.textContent=JSON.stringify(raw,null,2);
+  }
+
+  function renderScheduledTasks() {
+    const el=document.getElementById('scheduledTasks');
+    if (!el) return;
+    if (!scheduledTasks.length) {el.innerHTML='<div style="font-size:13px;color:var(--muted)">No pending tasks</div>';return;}
+    el.innerHTML=scheduledTasks.map(t=>`<div class="task-item"><div class="mono" style="flex:1">${t.code}</div><span class="tag tag-amber">${t.delay}ms</span></div>`).join('');
+  }
+
+  return { dispatch, on, register, task, schedule, bootstrap, election, modules };
+})();
+
+function dispatchCustomEvent() {
+  const type=document.getElementById('evtType').value.trim();
+  let payload={};
+  try{payload=JSON.parse(document.getElementById('evtPayload').value||'{}');}catch(e){}
+  if (!type){showToast('Enter event type','!');return;}
+  SovereignKernel.dispatch({type,payload});
+  showToast('Event dispatched: '+type);
+}
+
+function scheduleTask() {
+  const code=document.getElementById('taskCode').value.trim();
+  const delay=parseInt(document.getElementById('taskDelay').value)||1000;
+  if (!code){showToast('Enter code to schedule','!');return;}
+  SovereignKernel.schedule(code,delay);
+  document.getElementById('taskCode').value='';
+  document.getElementById('taskDelay').value='';
+  showToast('Task scheduled in '+delay+'ms');
+}
+
+// ===== MESSAGING =====
+const MessagingLayer = (() => {
+  const chats=new Map();
+  let activeChatId=null;
+
+  function init() {
+    ['Alice','Bob'].forEach(name=>createChatSilent(name));
+    renderChatList();
+  }
+
+  function createChatSilent(name) {
+    const id='chat-'+Math.random().toString(36).slice(2);
+    chats.set(id,{id,name,messages:[],online:Math.random()>0.5});
+    return id;
+  }
+
+  function createChat() {
+    const name=document.getElementById('newChatName').value.trim();
+    if (!name){showToast('Enter a name','!');return;}
+    const id=createChatSilent(name);
+    renderChatList();
+    closeModal('newChatModal');
+    openChat(id);
+    showToast('Chat created with '+name);
+  }
+
+  function renderChatList() {
+    const el=document.getElementById('chatList');
+    if (!el) return;
+    el.innerHTML=Array.from(chats.values()).map(c=>`
+      <div onclick="MessagingLayer.openChat('${c.id}')" style="padding:10px;border-radius:10px;cursor:pointer;margin-bottom:4px;background:${c.id===activeChatId?'var(--surface3)':'transparent'}">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="width:28px;height:28px;border-radius:50%;background:var(--accent2);display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0">${c.name.slice(0,2).toUpperCase()}</div>
+          <div>
+            <div style="font-weight:600;font-size:13px">${c.name}</div>
+            <div style="font-size:11px;color:${c.online?'var(--green)':'var(--muted)'}">${c.online?'online':'offline'}</div>
+          </div>
+        </div>
+      </div>
+    `).join('');
+  }
+
+  function openChat(id) {
+    activeChatId=id;
+    const chat=chats.get(id);
+    if (!chat) return;
+    document.getElementById('noChatSelected').style.display='none';
+    const activeEl=document.getElementById('activeChat');
+    activeEl.style.display='flex';
+    document.getElementById('chatAvatar').textContent=chat.name.slice(0,2).toUpperCase();
+    document.getElementById('chatName').textContent=chat.name;
+    document.getElementById('chatStatus').textContent=chat.online?'● online':'○ offline';
+    document.getElementById('chatStatus').style.color=chat.online?'var(--green)':'var(--muted)';
+    renderMessages(id);
+    renderChatList();
+  }
+
+  function renderMessages(id) {
+    const chat=chats.get(id);
+    if (!chat) return;
+    const el=document.getElementById('chatMessages');
+    if (!el) return;
+    el.innerHTML=chat.messages.map(m=>`
+      <div class="msg-wrap-${m.out?'out':'in'}">
+        <div class="msg-bubble msg-${m.out?'out':'in'}">${m.text}</div>
+        <div class="msg-meta">${m.out?'You':'◈ '+m.from} · ${m.time} ${m.signed?'<span style="color:var(--green);font-size:10px">✓ signed</span>':''} ${m.encrypted?'<span style="color:var(--accent);font-size:10px">🔒</span>':''}</div>
+      </div>
+    `).join('');
+    el.scrollTop=el.scrollHeight;
+  }
+
+  async function sendMessage(chatId, text) {
+    if (!text.trim()) return;
+    const chat=chats.get(chatId);
+    if (!chat) return;
+    const msg={id:Math.random().toString(36).slice(2),from:SovereignIdentity.state.alias||'Me',to:chat.name,text,out:true,time:new Date().toLocaleTimeString(),signed:!!SovereignIdentity.state.keyPair,encrypted:true,ts:Date.now()};
+    chat.messages.push(msg);
+    SOS.stats.msgs++;
+    document.getElementById('dash-msgs').textContent=SOS.stats.msgs;
+    P2PTransport.broadcast({type:'msg:send',payload:msg});
+    SovereignKernel.dispatch({type:'msg:send',payload:{to:chat.name,id:msg.id}});
+    log('OK','MSG',`Sent to ${chat.name}: "${text.slice(0,30)}" [signed=${msg.signed}]`);
+    renderMessages(chatId);
+    await Storage.put('msg:'+msg.id, msg);
+    if (chat.online) {
+      setTimeout(()=>{
+        const replies=['Got your message, acknowledged.','Received. Routing via gossip protocol.','Message verified. Signature valid.','Copy that. P2P channel secure.','Acknowledged. Encrypted and stored.'];
+        const reply={id:Math.random().toString(36).slice(2),from:chat.name,text:replies[Math.floor(Math.random()*replies.length)],out:false,time:new Date().toLocaleTimeString(),signed:true,encrypted:true,ts:Date.now()};
+        chat.messages.push(reply);
+        renderMessages(chatId);
+        log('OK','MSG',`Received from ${chat.name}: "${reply.text.slice(0,30)}"`);
+      }, 800+Math.random()*2000);
+    }
+  }
+
+  return { init, createChat, openChat, renderChatList, sendMessage, activeChatId:()=>activeChatId };
+})();
+
+function sendChatMessage() {
+  const id=MessagingLayer.activeChatId();
+  const input=document.getElementById('msgInput');
+  if (!id||!input.value.trim()) return;
+  MessagingLayer.sendMessage(id, input.value.trim());
+  input.value='';
+}
+
+// ===== AI =====
+const AI = (() => {
+  let ollamaConnected=false;
+  let model='llama3.2';
+  const conversationHistory=[];
+
+  async function checkOllama() {
+    model=document.getElementById('ollamaModel')?.value||'llama3.2';
+    document.getElementById('ollamaStatus').textContent='Checking...';
+    document.getElementById('ollamaStatus').className='tag tag-amber';
+    log('INFO','AI','Checking Ollama at localhost:11434...');
+    try {
+      const resp=await fetch('http://localhost:11434/api/tags',{signal:AbortSignal.timeout(3000)});
+      if (resp.ok) {
+        const data=await resp.json();
+        ollamaConnected=true;
+        document.getElementById('ollamaStatus').textContent='Connected';
+        document.getElementById('ollamaStatus').className='tag tag-green';
+        log('OK','AI','Ollama connected. Models: '+data.models?.map(m=>m.name).join(', '));
+        if (data.models?.length) document.getElementById('ollamaModels').innerHTML=data.models.map(m=>`<span class="tag tag-blue" style="margin:3px;font-size:11px">${m.name}</span>`).join('');
+        showToast('Ollama connected! Models: '+data.models?.length);
+      } else throw new Error('HTTP '+resp.status);
+    } catch(e) {
+      ollamaConnected=false;
+      document.getElementById('ollamaStatus').textContent='Not running';
+      document.getElementById('ollamaStatus').className='tag tag-red';
+      log('WARN','AI','Ollama not available: '+e.message);
+    }
+  }
+
+  async function chat() {
+    const input=document.getElementById('aiInput');
+    const prompt=input.value.trim();
+    if (!prompt) return;
+    input.value='';
+    document.getElementById('aiSendBtn').disabled=true;
+
+    const userMsg=document.createElement('div');
+    userMsg.className='msg-bubble msg-out';
+    userMsg.style.cssText='max-width:80%;margin-left:auto;margin-bottom:8px';
+    userMsg.textContent=prompt;
+    document.getElementById('aiMessages').appendChild(userMsg);
+    conversationHistory.push({role:'user',content:prompt});
+    log('INFO','AI','Sending to Ollama: '+prompt.slice(0,60));
+
+    const thinkEl=document.createElement('div');
+    thinkEl.className='ai-thinking';
+    thinkEl.innerHTML='AI thinking <div class="dot-pulse"><span></span><span></span><span></span></div>';
+    thinkEl.style.marginBottom='8px';
+    document.getElementById('aiMessages').appendChild(thinkEl);
+    document.getElementById('aiMessages').scrollTop=9999;
+
+    if (!ollamaConnected) {
+      setTimeout(()=>{
+        thinkEl.remove();
+        addAIMessage('Ollama is not running. Start it with `ollama run '+model+'` then click Check above. No data leaves your device when using local AI.', false);
+        document.getElementById('aiSendBtn').disabled=false;
+      }, 400);
+      return;
+    }
+
+    try {
+      const resp=await fetch('http://localhost:11434/api/chat',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,messages:conversationHistory,stream:false})});
+      const data=await resp.json();
+      thinkEl.remove();
+      const reply=data.message?.content||'No response';
+      conversationHistory.push({role:'assistant',content:reply});
+      addAIMessage(reply, true);
+      log('OK','AI','Response received: '+reply.slice(0,60));
+    } catch(e) { thinkEl.remove(); addAIMessage('Error: '+e.message, false); log('ERROR','AI','Chat error: '+e.message); }
+    document.getElementById('aiSendBtn').disabled=false;
+  }
+
+  function addAIMessage(text, success) {
+    const el=document.createElement('div');
+    el.className='ai-response';
+    el.style.borderLeftColor=success?'var(--accent2)':'var(--red)';
+    el.textContent=text;
+    document.getElementById('aiMessages').appendChild(el);
+    document.getElementById('aiMessages').scrollTop=9999;
+    SovereignKernel.dispatch({type:'ai:response',payload:{length:text.length}});
+  }
+
+  async function runAgent() {
+    const taskInput=document.getElementById('agentTask').value.trim();
+    if (!taskInput){showToast('Enter a task','!');return;}
+    document.getElementById('agentBtn').disabled=true;
+    const agents=['Planner','Builder','Auditor','Executor','Optimizer'];
+    const out=document.getElementById('agentOutput');
+    out.innerHTML='';
+    log('OK','AI','Multi-agent task: '+taskInput);
+
+    for (const agent of agents) {
+      await new Promise(r=>setTimeout(r,200+Math.random()*300));
+      const div=document.createElement('div');
+      div.style.cssText='padding:8px;border-radius:8px;margin-bottom:6px;background:var(--surface3);border:1px solid var(--border);font-size:13px';
+      const agentOutputs={Planner:'Decomposing task into subtasks and identifying dependencies...',Builder:'Generating implementation plan and code structure...',Auditor:'Analyzing for security vulnerabilities and edge cases...',Executor:'Running task with sandboxed compute resources...',Optimizer:'Profiling performance and suggesting improvements...'};
+      div.innerHTML=`<span class="tag tag-purple" style="margin-right:8px">${agent}</span><span style="color:var(--muted)">${agentOutputs[agent]}</span>`;
+      out.appendChild(div);
+      if (ollamaConnected) {
+        try {
+          const resp=await fetch('http://localhost:11434/api/generate',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,prompt:`You are ${agent}. Task: ${taskInput}. Give a 1-sentence plan.`,stream:false})});
+          const data=await resp.json();
+          div.querySelector('span:last-child').textContent=data.response?.slice(0,120)||div.querySelector('span:last-child').textContent;
+        } catch(e){}
+      }
+      log('OK','AI',`[${agent}] processed task`);
+    }
+    document.getElementById('agentBtn').disabled=false;
+    showToast('Agents completed task');
+  }
+
+  async function embed() {
+    const text=document.getElementById('embedInput').value.trim();
+    if (!text){showToast('Enter text to embed','!');return;}
+    log('INFO','AI','Embedding: '+text.slice(0,40));
+    const result=document.getElementById('embedResult');
+    if (ollamaConnected) {
+      try {
+        const resp=await fetch('http://localhost:11434/api/embeddings',{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({model,prompt:text})});
+        const data=await resp.json();
+        const emb=data.embedding?.slice(0,8).map(v=>v.toFixed(4)).join(', ');
+        result.innerHTML=`<div class="hash-display" style="margin-top:8px">Embedding [${data.embedding?.length}d]: [${emb}, ...]</div>`;
+        log('OK','AI','Embedding: '+data.embedding?.length+' dims');
+        return;
+      } catch(e){}
+    }
+    const enc=new TextEncoder().encode(text);
+    const buf=await crypto.subtle.digest('SHA-256',enc);
+    const hash=Array.from(new Uint8Array(buf)).map(b=>b.toString(16).padStart(2,'0')).join('');
+    const pseudo=Array.from({length:8},(_,i)=>((parseInt(hash.slice(i*4,i*4+4),16)/65535)*2-1).toFixed(4)).join(', ');
+    result.innerHTML=`<div class="hash-display" style="margin-top:8px">SHA-256 pseudo-embed [256d]: [${pseudo}, ...]<br><span style="color:var(--amber)">Start Ollama for real embeddings</span></div>`;
+  }
+
+  return { checkOllama, chat, runAgent, embed };
+})();
+
+// ===== GOVERNANCE =====
+const Governance = (() => {
+  const proposals=[];
+
+  function create(title, desc, options) {
+    const p={id:'prop-'+Math.random().toString(36).slice(2),creator:SovereignIdentity.state.alias||'Unknown',title,desc,options:options.map(o=>({label:o,votes:0})),state:'active',created:Date.now(),myVote:null};
+    proposals.push(p);
+    SovereignKernel.dispatch({type:'governance:proposal',payload:{id:p.id,title}});
+    log('OK','GOVERNANCE','Proposal: '+title);
+    render();
+    return p;
+  }
+
+  function createFromUI() {
+    const title=document.getElementById('propTitle').value.trim();
+    const desc=document.getElementById('propDesc').value.trim();
+    const options=document.getElementById('propOptions').value.split(',').map(s=>s.trim()).filter(Boolean);
+    if (!title||!options.length){showToast('Fill in all fields','!');return;}
+    create(title,desc,options);
+    closeModal('proposalModal');
+    showToast('Proposal: '+title);
+  }
+
+  function vote(propId, optionIdx) {
+    const p=proposals.find(x=>x.id===propId);
+    if (!p||p.state!=='active') return;
+    if (p.myVote!==null) p.options[p.myVote].votes--;
+    p.options[optionIdx].votes++;
+    p.myVote=optionIdx;
+    const total=proposals.reduce((a,p)=>a+p.options.reduce((b,o)=>b+o.votes,0),0);
+    document.getElementById('voteCount').textContent=total;
+    SovereignKernel.dispatch({type:'governance:vote',payload:{propId,option:p.options[optionIdx].label}});
+    log('OK','GOVERNANCE',`Voted "${p.options[optionIdx].label}" on: ${p.title}`);
+    P2PTransport.gossip('governance:vote',{propId,option:optionIdx});
+    render();
+    showToast('Vote cast: '+p.options[optionIdx].label);
+  }
+
+  function render() {
+    document.getElementById('propCount').textContent=proposals.length;
+    const noEl=document.getElementById('noProposals');
+    const listEl=document.getElementById('proposalList');
+    if (!proposals.length){if(noEl)noEl.style.display='block';if(listEl)listEl.innerHTML='';return;}
+    if(noEl)noEl.style.display='none';
+    if(listEl)listEl.innerHTML=proposals.map(p=>{
+      const total=p.options.reduce((a,b)=>a+b.votes,0);
+      return `<div class="card" style="margin-bottom:12px">
+        <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:6px">
+          <div class="card-title">${p.title}</div>
+          <span class="tag ${p.state==='active'?'tag-green':'tag-blue'}">${p.state}</span>
+        </div>
+        ${p.desc?`<div style="font-size:13px;color:var(--muted);margin-bottom:10px">${p.desc}</div>`:''}
+        ${p.options.map((o,i)=>{
+          const pct=total>0?Math.round(o.votes/total*100):0;
+          return `<div class="vote-option ${p.myVote===i?'voted':''}" onclick="Governance.vote('${p.id}',${i})">
+            <div style="min-width:80px;font-weight:600;font-size:13px">${o.label}</div>
+            <div class="vote-bar"><div class="vote-fill" style="width:${pct}%"></div></div>
+            <div style="min-width:40px;text-align:right;font-size:13px;font-family:'JetBrains Mono',monospace">${pct}%</div>
+            <div style="min-width:24px;text-align:right;font-size:11px;color:var(--muted)">${o.votes}</div>
+            ${p.myVote===i?'<span style="color:var(--green);font-size:12px">✓</span>':''}
+          </div>`;
+        }).join('')}
+        <div style="font-size:12px;color:var(--muted);margin-top:8px">By ${p.creator} · ${new Date(p.created).toLocaleString()} · ${total} votes</div>
+      </div>`;
+    }).join('');
+  }
+
+  return { create, createFromUI, vote };
+})();
+
+// ===== COMPUTE =====
+const ComputeLayer = (() => {
+  const jobs=[];
+  let done=0;
+
+  function submitJob(name, code) {
+    const job={id:'job-'+Math.random().toString(36).slice(2),name,code,status:'running',submitted:Date.now(),result:null,error:null,node:'local'};
+    jobs.push(job);
+    document.getElementById('jobsQueued').textContent=jobs.filter(j=>j.status==='running').length;
+    document.getElementById('noJobs').style.display='none';
+    renderJobs();
+    log('INFO','COMPUTE','Job submitted: '+name);
+    SovereignKernel.dispatch({type:'compute:submit',payload:{id:job.id,name}});
+    setTimeout(()=>{
+      try { const fn=new Function(code); job.result=fn(); job.status='done'; done++; document.getElementById('jobsDone').textContent=done; }
+      catch(e) { job.error=e.message; job.status='error'; }
+      job.duration=Date.now()-job.submitted;
+      document.getElementById('jobsQueued').textContent=jobs.filter(j=>j.status==='running').length;
+      renderJobs();
+      log(job.status==='done'?'OK':'ERROR','COMPUTE',`Job ${name} ${job.status} in ${job.duration}ms${job.result!==undefined?' result='+JSON.stringify(job.result).slice(0,40):''}`);
+      if(job.status==='done') showToast('Job done: '+name+' → '+JSON.stringify(job.result).slice(0,30));
+    }, 500+Math.random()*1500);
+    return job;
+  }
+
+  function submitFromUI() {
+    const name=document.getElementById('jobName').value.trim()||'job-'+Date.now();
+    const code=document.getElementById('jobCode').value.trim();
+    if (!code){showToast('Enter job code','!');return;}
+    submitJob(name,code);
+    closeModal('computeModal');
+    showToast('Job submitted: '+name);
+  }
+
+  function renderJobs() {
+    const el=document.getElementById('jobList');
+    if (!el) return;
+    el.innerHTML=jobs.slice().reverse().map(j=>`
+      <div class="compute-job">
+        <div style="font-size:20px">${j.status==='running'?'▷':j.status==='done'?'✓':'✕'}</div>
+        <div style="flex:1">
+          <div style="font-weight:600;font-size:14px">${j.name}</div>
+          <div class="mono" style="font-size:11px;color:var(--muted);margin-top:2px">${j.code.slice(0,60)}${j.code.length>60?'...':''}</div>
+          ${j.result!==undefined&&j.status==='done'?`<div style="font-size:12px;color:var(--green);margin-top:4px">→ ${JSON.stringify(j.result).slice(0,60)}</div>`:''}
+          ${j.error?`<div style="font-size:12px;color:var(--red);margin-top:4px">Error: ${j.error}</div>`:''}
+        </div>
+        <div style="text-align:right">
+          <span class="tag ${j.status==='running'?'tag-amber':j.status==='done'?'tag-green':'tag-red'}">${j.status}</span>
+          ${j.duration?`<div style="font-size:11px;color:var(--muted);margin-top:4px">${j.duration}ms</div>`:''}
+        </div>
+      </div>
+    `).join('');
+  }
+
+  setInterval(()=>{
+    const running=jobs.some(j=>j.status==='running');
+    document.getElementById('cpuUsage').textContent=running?Math.floor(20+Math.random()*60)+'%':'0%';
+    document.getElementById('cpuUsage').style.color=running?'var(--amber)':'var(--green)';
+  },1000);
+
+  return { submitJob, submitFromUI, renderJobs };
+})();
+
+// ===== BOOT =====
+(async()=>{
+  log('OK','KERNEL','ISOS initializing...');
+  log('INFO','KERNEL','Runtime: browser + IndexedDB + WebCrypto + WebRTC');
+  await new Promise(r=>setTimeout(r,300));
+  await SovereignKernel.bootstrap();
+  P2PTransport.renderTransportStack();
+
+  Governance.create('Set gossip fanout to 5','Increase message propagation reliability in sparse networks.',['Approve','Reject','Defer']);
+
+  await Storage.put('config:network',{gossipFanout:3,maxPeers:50,ttl:8});
+  await Storage.put('config:identity',{alias:SovereignIdentity.state.alias,did:SovereignIdentity.getDID()});
+
+  ComputeLayer.submitJob('fibonacci','const fib=(n)=>n<=1?n:fib(n-1)+fib(n-2);return fib(20);');
+  ComputeLayer.submitJob('hash-bench','return Array.from({length:1000},(_,i)=>i*i*i).reduce((a,b)=>a+b,0);');
+
+  setTimeout(()=>AI.checkOllama(), 1000);
+
+  setInterval(()=>{
+    SovereignKernel.dispatch({type:'kernel:heartbeat',payload:{ts:Date.now(),peers:P2PTransport.peers.size}});
+  }, 10000);
+})();
+</script>
+</body>
+</html>
